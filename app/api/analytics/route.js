@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 export async function GET() {
-    const invoices = db.getInvoices();
+    const invoices = await db.getInvoices();
 
     // 1. Cycle Time Calculation
     const paidInvoices = invoices.filter(inv => inv.status === 'PAID' && inv.paidAt && inv.ingestedAt);

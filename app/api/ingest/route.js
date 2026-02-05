@@ -24,14 +24,14 @@ export async function POST(request) {
         };
 
         // Save initial state
-        db.saveInvoice(invoiceId, invoiceMetadata);
+        await db.saveInvoice(invoiceId, invoiceMetadata);
 
         // Perform processing inline (Simulation)
         // NOTE: In production serverless, you'd use a background worker like Vercel Functions with Upstash QStash.
         const result = await processInvoice(invoiceId, null);
 
         if (result.success) {
-            db.saveInvoice(invoiceId, {
+            await db.saveInvoice(invoiceId, {
                 ...result.data,
                 validation: result.validation,
                 matching: result.matching,
@@ -45,7 +45,7 @@ export async function POST(request) {
 
         return NextResponse.json({
             message: 'Invoice received and processing started',
-            invoice: db.getInvoice(invoiceId)
+            invoice: await db.getInvoice(invoiceId)
         });
 
     } catch (error) {

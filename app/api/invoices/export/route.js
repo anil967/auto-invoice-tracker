@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 
 export async function GET() {
     try {
-        const invoices = db.getInvoices();
+        const invoices = await db.getInvoices();
 
         // Define CSV headers
         const headers = ["ID", "Original Name", "Vendor", "Amount", "Status", "Received At", "Processed At", "Cost Center", "Account Code"];

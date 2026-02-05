@@ -6,7 +6,7 @@ export async function POST(request, { params }) {
     const { id } = params;
     const { action, comments } = await request.json();
 
-    const invoice = db.getInvoice(id);
+    const invoice = await db.getInvoice(id);
     if (!invoice) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
@@ -32,7 +32,7 @@ export async function POST(request, { params }) {
         nextStatus = 'RECEIVED';
     }
 
-    const updatedInvoice = db.saveInvoice(id, {
+    const updatedInvoice = await db.saveInvoice(id, {
         ...timestampUpdates,
         status: nextStatus,
         updatedAt: new Date().toISOString(),

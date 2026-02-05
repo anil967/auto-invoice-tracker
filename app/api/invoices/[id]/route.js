@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 
 export async function GET(request, { params }) {
     const { id } = params;
-    const invoice = db.getInvoice(id);
+    const invoice = await db.getInvoice(id);
 
     if (!invoice) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
@@ -16,12 +16,12 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const updates = await request.json();
 
-    const invoice = db.getInvoice(id);
+    const invoice = await db.getInvoice(id);
     if (!invoice) {
         return NextResponse.json({ error: 'Invoice not found' }, { status: 404 });
     }
 
-    const updatedInvoice = db.saveInvoice(id, {
+    const updatedInvoice = await db.saveInvoice(id, {
         ...updates,
         updatedAt: new Date().toISOString()
     });
