@@ -48,20 +48,6 @@ export default function LandingPage() {
               <Icon name="ArrowRight" className="ml-2 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </Link>
-
-          <Link href="/vendors">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="btn btn-outline btn-lg rounded-full px-8 text-primary border-primary hover:bg-primary/5 font-bold"
-            >
-              For Vendors
-            </motion.button>
-          </Link>
-
-          <button className="btn btn-ghost btn-lg rounded-full text-gray-600 hover:bg-white/50">
-            View Documentation
-          </button>
         </div>
 
         {/* Feature Highlights */}
