@@ -122,14 +122,14 @@ export default function ApprovalsPage() {
 
                 {/* Action */}
                 <Link href={`/approvals/${invoice.id}`} className="w-full">
-                  <button className="btn btn-warning btn-outline w-full hover:!text-white shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
+                  <button className="btn btn-warning btn-outline w-full hover:text-white! shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
                     Review & Approve
                     <Icon name="ArrowRight" size={18} />
                   </button>
                 </Link>
 
                 {/* Decorative Corner */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent rounded-tr-2xl pointer-events-none"></div>
+                <div className="absolute top-0 right-0 w-20 h-20 bg-linear-to-br from-white/20 to-transparent rounded-tr-2xl pointer-events-none"></div>
               </motion.div>
             ))}
           </div>
