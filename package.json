@@ -1,0 +1,30 @@
+{
+  "name": "0236120b-6d4d-4c10-8833-99940f850c0e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "clsx": "latest",
+    "daisyui": "^5.0.43",
+    "date-fns": "latest",
+    "framer-motion": "^12.23.16",
+    "lucide-react": "^0.525.0",
+    "next": "15.3.6",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-dropzone": "latest",
+    "react-is": "latest",
+    "recharts": "latest",
+    "tailwind-merge": "latest",
+    "uuid": "^13.0.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "tailwindcss": "^4"
+  }
+}
