@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
-import { addInvoice } from "@/utils/storage";
+import { ingestInvoice } from "@/lib/api";
 
 const DropZone = ({ onUploadComplete }) => {
   const [isUploading, setIsUploading] = useState(false);
@@ -19,8 +19,6 @@ const DropZone = ({ onUploadComplete }) => {
     setUploadSuccess(false);
 
     try {
-      const { ingestInvoice } = await import("@/lib/api");
-
       // Step through files
       for (let i = 0; i < acceptedFiles.length; i++) {
         const file = acceptedFiles[i];
@@ -28,22 +26,8 @@ const DropZone = ({ onUploadComplete }) => {
         // Update progress based on file count
         setUploadProgress(Math.round(((i) / acceptedFiles.length) * 100) + 10);
 
-        const response = await ingestInvoice(file);
-
-        // Sync with local storage for UI consistency
-        const newInvoice = {
-          id: response.invoice.id,
-          vendorName: "Processing...",
-          amount: 0.00,
-          date: new Date().toISOString().split('T')[0],
-          dueDate: "",
-          status: "Digitizing",
-          items: [],
-          category: "Uncategorized",
-          fileName: file.name,
-          serverFilename: response.invoice.filename
-        };
-        addInvoice(newInvoice);
+        await ingestInvoice(file);
+        // The backend handles saving and initial status
       }
 
       setUploadProgress(100);

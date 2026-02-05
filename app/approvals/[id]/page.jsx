@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getInvoiceById, initStorage } from "@/utils/storage";
+import { getInvoiceStatus } from "@/lib/api";
 import ThreeWayMatch from "@/components/Matching/ThreeWayMatch";
 import AuditTrail from "@/components/Workflow/AuditTrail";
 import ApprovalActions from "@/components/Workflow/ApprovalActions";
@@ -18,16 +18,21 @@ export default function ApprovalDetailPage() {
 
   useEffect(() => {
     const fetchInvoice = async () => {
-      await initStorage();
-      const foundInvoice = getInvoiceById(params.id);
+      try {
+        const foundInvoice = await getInvoiceStatus(params.id);
 
-      if (!foundInvoice) {
+        if (!foundInvoice) {
+          router.push("/approvals");
+          return;
+        }
+
+        setInvoice(foundInvoice);
+      } catch (error) {
+        console.error("Failed to fetch invoice:", error);
         router.push("/approvals");
-        return;
+      } finally {
+        setLoading(false);
       }
-
-      setInvoice(foundInvoice);
-      setLoading(false);
     };
 
     if (params.id) {
@@ -47,7 +52,7 @@ export default function ApprovalDetailPage() {
   }
 
   // Check if invoice is already processed to disable actions
-  const isProcessed = invoice.status === "Approved" || invoice.status === "Rejected";
+  const isProcessed = invoice.status === "APPROVED" || invoice.status === "REJECTED";
 
   return (
     <div className="flex flex-col h-full max-w-7xl mx-auto space-y-4 pb-10">
@@ -114,23 +119,21 @@ export default function ApprovalDetailPage() {
             <ApprovalActions invoiceId={invoice.id} />
           ) : (
             <div
-              className={`p-6 rounded-2xl border ${
-                invoice.status === "Approved"
-                  ? "bg-success/10 border-success/30 text-success-content"
-                  : "bg-error/10 border-error/30 text-error-content"
-              } flex flex-col items-center justify-center text-center space-y-3`}
+              className={`p-6 rounded-2xl border ${invoice.status === "APPROVED"
+                ? "bg-success/10 border-success/30 text-success-content"
+                : "bg-error/10 border-error/30 text-error-content"
+                } flex flex-col items-center justify-center text-center space-y-3`}
             >
               <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center ${
-                  invoice.status === "Approved" ? "bg-success text-white" : "bg-error text-white"
-                }`}
+                className={`w-16 h-16 rounded-full flex items-center justify-center ${invoice.status === "APPROVED" ? "bg-success text-white" : "bg-error text-white"
+                  }`}
               >
                 <Icon
-                  name={invoice.status === "Approved" ? "Check" : "X"}
+                  name={invoice.status === "APPROVED" ? "Check" : "X"}
                   size={32}
                 />
               </div>
-              <h3 className="text-xl font-bold">
+              <h3 className="text-xl font-bold uppercase">
                 Invoice {invoice.status}
               </h3>
               <p className="text-sm opacity-80">

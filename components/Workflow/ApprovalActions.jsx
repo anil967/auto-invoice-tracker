@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Button from "@/components/ui/Button";
-import { updateInvoice } from "@/utils/storage";
+import { transitionWorkflow } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
@@ -12,26 +12,32 @@ const ApprovalActions = ({ invoiceId, onActionComplete }) => {
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(null); // 'approved' | 'rejected' | null
 
-  const handleAction = async (status) => {
+  const handleAction = async (decision) => {
     setLoading(true);
 
-    // Simulate network latency
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    try {
+      // decide which action to send to API
+      const action = decision === "Approved" ? "APPROVE" : "REJECT";
 
-    // Update Storage
-    updateInvoice(invoiceId, { status });
+      // Update via API
+      await transitionWorkflow(invoiceId, action, "Authorized via Management Dashboard");
 
-    setLoading(false);
-    setShowToast(status === "Approved" ? "approved" : "rejected");
+      setShowToast(decision === "Approved" ? "approved" : "rejected");
 
-    // Wait for toast animation before redirecting
-    setTimeout(() => {
-      if (onActionComplete) {
-        onActionComplete();
-      } else {
-        router.push("/approvals");
-      }
-    }, 1500);
+      // Wait for toast animation before redirecting
+      setTimeout(() => {
+        if (onActionComplete) {
+          onActionComplete();
+        } else {
+          router.push("/approvals");
+        }
+      }, 1500);
+    } catch (error) {
+      console.error("Workflow transition failed:", error);
+      alert("Failed to update invoice status. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -76,11 +82,10 @@ const ApprovalActions = ({ invoiceId, onActionComplete }) => {
             initial={{ opacity: 0, y: 20, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.9 }}
-            className={`absolute -top-20 left-0 right-0 z-50 p-4 rounded-xl shadow-2xl flex items-center justify-center gap-3 border ${
-              showToast === "approved"
+            className={`absolute -top-20 left-0 right-0 z-50 p-4 rounded-xl shadow-2xl flex items-center justify-center gap-3 border ${showToast === "approved"
                 ? "bg-success text-white border-success-content/20"
                 : "bg-error text-white border-error-content/20"
-            }`}
+              }`}
           >
             <Icon
               name={showToast === "approved" ? "CheckCircle" : "AlertOctagon"}

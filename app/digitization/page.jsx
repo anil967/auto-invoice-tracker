@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getInvoices, initStorage } from "@/utils/storage";
+import { getAllInvoices } from "@/lib/api";
 import InvoiceList from "@/components/Digitization/InvoiceList";
 import Icon from "@/components/Icon";
 import { motion } from "framer-motion";
@@ -13,38 +13,25 @@ export default function DigitizationPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { getAllInvoices } = await import("@/lib/api");
         const allInvoices = await getAllInvoices();
         setInvoices(allInvoices);
-
-        // Sync local storage for other components
-        const { getInvoices, updateInvoice } = await import("@/utils/storage");
-        allInvoices.forEach(inv => updateInvoice(inv.id, inv));
       } catch (e) {
         console.error("Failed to load invoices from backend", e);
-        // Fallback to local storage if backend is down
-        const allInvoices = getInvoices();
-        setInvoices(allInvoices);
       } finally {
         setLoading(false);
       }
     };
     loadData();
 
-    // Polling for updates on "Digitizing" or "Processing" invoices
+    // Polling for updates on "DIGITIZING" or "RECEIVED" invoices
     const pollInterval = setInterval(async () => {
-      const { getAllInvoices } = await import("@/lib/api");
-      const { updateInvoice } = await import("@/utils/storage");
-
       try {
         const remoteInvoices = await getAllInvoices();
-        // Simple diff check to update UI only if status changed
         setInvoices(remoteInvoices);
-        remoteInvoices.forEach(inv => updateInvoice(inv.id, inv));
       } catch (e) {
         console.error("Polling error", e);
       }
-    }, 3000);
+    }, 5000);
 
     return () => clearInterval(pollInterval);
   }, []);
@@ -89,19 +76,19 @@ export default function DigitizationPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-700 flex flex-col">
           <span className="text-xs font-bold uppercase opacity-70">To Digitize</span>
-          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'Digitizing').length}</span>
+          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'RECEIVED').length}</span>
         </div>
         <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 flex flex-col">
           <span className="text-xs font-bold uppercase opacity-70">Processing</span>
-          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'Processing').length}</span>
+          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'DIGITIZING' || i.status === 'VERIFIED').length}</span>
         </div>
         <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-700 flex flex-col">
           <span className="text-xs font-bold uppercase opacity-70">Pending Approval</span>
-          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'Pending Approval').length}</span>
+          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'PENDING_APPROVAL').length}</span>
         </div>
         <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-700 flex flex-col">
           <span className="text-xs font-bold uppercase opacity-70">Completed Today</span>
-          <span className="text-2xl font-bold">12</span>
+          <span className="text-2xl font-bold">{invoices.filter(i => i.status === 'PAID' || i.status === 'APPROVED').length}</span>
         </div>
       </div>
 

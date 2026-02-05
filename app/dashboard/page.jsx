@@ -1,17 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getInvoices, initStorage } from "@/utils/storage";
-import StatCard from "@/components/Dashboard/StatCard";
-import DropZone from "@/components/Dashboard/DropZone";
-import Card from "@/components/ui/Card";
-import Icon from "@/components/Icon";
-import { motion } from "framer-motion";
-import Link from "next/link";
-import RoleSwitcher from "@/components/Dashboard/RoleSwitcher";
-import AnalyticsView from "@/components/Dashboard/AnalyticsView";
-
-import { getCurrentUser, ROLES, getDelegation, setDelegation, clearDelegation } from "@/utils/auth";
+import { getAllInvoices } from "@/lib/api";
 
 export default function DashboardPage() {
   const [invoices, setInvoices] = useState([]);
@@ -21,35 +11,27 @@ export default function DashboardPage() {
     pendingCount: 0,
     processingCount: 0,
     approvedCount: 0,
+    verifiedCount: 0,
+    discrepancyCount: 0
   });
-  const [activeTab, setActiveTab] = useState("overview"); // Phase 11 fix
+  const [activeTab, setActiveTab] = useState("overview");
 
   const fetchData = async () => {
     try {
-      const { getAllInvoices } = await import("@/lib/api");
       const data = await getAllInvoices();
       setInvoices(data);
       calculateStats(data);
-
-      // Update local storage for compatibility
-      const { updateInvoice } = await import("@/utils/storage");
-      data.forEach(inv => updateInvoice(inv.id, inv));
     } catch (e) {
       console.error("Dashboard fetch error", e);
-      // Fallback
-      await initStorage();
-      const data = getInvoices();
-      setInvoices(data);
-      calculateStats(data);
     }
   };
 
   const calculateStats = (data) => {
     const totalAmount = data.reduce((sum, inv) => sum + (Number(inv.amount) || 0), 0);
-    const pendingCount = data.filter(inv => inv.status === "Pending Approval").length;
-    const processingCount = data.filter(inv => ["Processing", "Digitizing"].includes(inv.status)).length;
-    const verifiedCount = data.filter(inv => inv.status === "Verified").length;
-    const discrepancyCount = data.filter(inv => inv.status === "Match Discrepancy").length;
+    const pendingCount = data.filter(inv => inv.status === "PENDING_APPROVAL").length;
+    const processingCount = data.filter(inv => ["DIGITIZING", "RECEIVED"].includes(inv.status)).length;
+    const verifiedCount = data.filter(inv => inv.status === "VERIFIED").length;
+    const discrepancyCount = data.filter(inv => inv.status === "MATCH_DISCREPANCY").length;
 
     setStats({
       totalAmount,
@@ -77,7 +59,7 @@ export default function DashboardPage() {
     if (currentUser.role === ROLES.ADMIN) return true;
     if (currentUser.role === ROLES.PROJECT_MANAGER) {
       // PMs only see Verified or Discrepancy invoices waiting for their input
-      return ['Verified', 'Match Discrepancy', 'Pending Approval'].includes(inv.status);
+      return ['VERIFIED', 'MATCH_DISCREPANCY', 'PENDING_APPROVAL'].includes(inv.status);
     }
     return true; // Finance sees all
   });
@@ -118,7 +100,7 @@ export default function DashboardPage() {
           <RoleSwitcher />
 
           <button
-            onClick={() => window.open('http://localhost:3001/api/invoices/export')}
+            onClick={() => window.open('/api/invoices/export')}
             className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm"
           >
             <Icon name="Download" size={16} />
@@ -234,15 +216,15 @@ export default function DashboardPage() {
                         transition={{ delay: idx * 0.1 }}
                         className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors border border-transparent hover:border-white/60 cursor-pointer"
                       >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${inv.status === 'Approved' || inv.status === 'Verified' ? 'bg-success/10 text-success' :
-                          inv.status === 'Pending Approval' ? 'bg-warning/10 text-warning' :
-                            inv.status === 'Issue Detected' || inv.status === 'Match Discrepancy' || inv.status === 'Validation Required' ? 'bg-error/10 text-error' :
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'bg-success/10 text-success' :
+                          inv.status === 'PENDING_APPROVAL' ? 'bg-warning/10 text-warning' :
+                            ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'bg-error/10 text-error' :
                               'bg-info/10 text-info'
                           }`}>
                           <Icon name={
-                            inv.status === 'Approved' || inv.status === 'Verified' ? 'Check' :
-                              inv.status === 'Pending Approval' ? 'Clock' :
-                                inv.status === 'Issue Detected' || inv.status === 'Match Discrepancy' || inv.status === 'Validation Required' ? 'AlertCircle' :
+                            ['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'Check' :
+                              inv.status === 'PENDING_APPROVAL' ? 'Clock' :
+                                ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'AlertCircle' :
                                   'RefreshCw'
                           } size={18} />
                         </div>
@@ -254,9 +236,9 @@ export default function DashboardPage() {
                         </div>
                         <div className="text-right">
                           <p className="font-bold text-gray-700 text-sm">{formatCurrency(inv.amount)}</p>
-                          <span className={`text-[10px] uppercase font-bold ${inv.status === 'Approved' ? 'text-success' :
-                            inv.status === 'Pending Approval' ? 'text-warning' :
-                              inv.status === 'Issue Detected' ? 'text-error' :
+                          <span className={`text-[10px] uppercase font-bold ${['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'text-success' :
+                            inv.status === 'PENDING_APPROVAL' ? 'text-warning' :
+                              ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'text-error' :
                                 'text-info'
                             }`}>
                             {inv.status}

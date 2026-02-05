@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { updateInvoice } from "@/utils/storage";
+import { updateInvoiceApi, getInvoiceStatus } from "@/lib/api";
 import { getCurrentUser, ROLES } from "@/utils/auth";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -44,16 +44,12 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
 
   // Poll for updates if still digitizing
   useEffect(() => {
-    if (invoice?.status === 'Digitizing') {
+    if (invoice?.status === 'DIGITIZING' || invoice?.status === 'RECEIVED') {
       const interval = setInterval(async () => {
-        const { getInvoiceStatus } = await import("@/lib/api");
-        const { updateInvoice } = await import("@/utils/storage");
-
         try {
           const status = await getInvoiceStatus(invoice.id);
-          if (status.status !== 'Digitizing') {
+          if (status.status !== invoice.status) {
             clearInterval(interval);
-            updateInvoice(invoice.id, status);
             setInvoice(status);
           }
         } catch (e) {
@@ -77,18 +73,14 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
     setIsSaving(true);
 
     try {
-      const { updateInvoiceApi } = await import("@/lib/api");
-      const { updateInvoice } = await import("@/utils/storage");
-
       // Update the invoice in backend
       const response = await updateInvoiceApi(formData.id, {
         ...formData,
         amount: parseFloat(formData.amount),
+        status: 'VERIFIED', // Moving to matched phase after validation
       });
 
-      // Also sync local storage for redundancy/compatibility
-      updateInvoice(formData.id, response.invoice);
-
+      setInvoice(response.invoice);
       router.push('/digitization');
     } catch (error) {
       console.error("Submission error", error);

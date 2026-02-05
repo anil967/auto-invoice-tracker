@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getInvoices, initStorage } from "@/utils/storage";
+import { getAllInvoices } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
@@ -12,12 +12,16 @@ export default function ApprovalsPage() {
 
   useEffect(() => {
     const loadData = async () => {
-      await initStorage();
-      const allInvoices = getInvoices();
-      // Filter for Pending Approval status
-      const pending = allInvoices.filter((inv) => inv.status === "Pending Approval");
-      setInvoices(pending);
-      setLoading(false);
+      try {
+        const allInvoices = await getAllInvoices();
+        // Filter for Pending Approval status
+        const pending = allInvoices.filter((inv) => inv.status === "PENDING_APPROVAL");
+        setInvoices(pending);
+      } catch (error) {
+        console.error("Failed to load approvals", error);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);

@@ -5,8 +5,9 @@ import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { updateInvoice } from "@/utils/storage";
+import { transitionWorkflow, getAllInvoices } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { getCurrentUser, hasPermission } from "@/utils/auth";
 import clsx from "clsx";
 
 const ThreeWayMatch = ({ invoice: initialInvoice }) => {
@@ -14,23 +15,26 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   const [invoice, setInvoice] = useState(initialInvoice);
   const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [goodsReceipt, setGoodsReceipt] = useState(null);
-  const [matchStatus, setMatchStatus] = useState(initialInvoice?.status === 'Verified' ? 'matched' : (initialInvoice?.status === 'Match Discrepancy' ? 'discrepancy' : 'analyzing'));
+  const [matchStatus, setMatchStatus] = useState(
+    ['VERIFIED', 'PAID', 'PENDING_APPROVAL'].includes(initialInvoice?.status) ? 'matched' :
+      (initialInvoice?.status === 'MATCH_DISCREPANCY' ? 'discrepancy' : 'analyzing')
+  );
   const [processing, setProcessing] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // --- Real-time Polling for Match Results ---
   useEffect(() => {
-    if (invoice?.status === 'Processing' || invoice?.status === 'Digitizing') {
+    if (['RECEIVED', 'DIGITIZING'].includes(invoice?.status)) {
       const interval = setInterval(async () => {
-        const { getInvoiceStatus } = await import("@/lib/api");
-        const { updateInvoice } = await import("@/utils/storage");
-
         try {
-          const status = await getInvoiceStatus(invoice.id);
-          if (status.status !== invoice.status && (status.status === 'Verified' || status.status === 'Match Discrepancy')) {
+          const allInvoices = await getAllInvoices();
+          const currentInvoice = allInvoices.find(inv => inv.id === invoice.id);
+
+          if (currentInvoice && currentInvoice.status !== invoice.status &&
+            (['VERIFIED', 'MATCH_DISCREPANCY'].includes(currentInvoice.status))) {
             clearInterval(interval);
-            updateInvoice(invoice.id, status);
-            setInvoice(status);
-            setMatchStatus(status.status === 'Verified' ? 'matched' : 'discrepancy');
+            setInvoice(currentInvoice);
+            setMatchStatus(currentInvoice.status === 'VERIFIED' ? 'matched' : 'discrepancy');
           }
         } catch (e) {
           console.error("Polling error", e);
@@ -44,15 +48,14 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   useEffect(() => {
     if (!invoice || matchStatus === 'analyzing') return;
 
-    // Fetch the detailed PO and Annexure data if needed (mocked for now based on backend matching results)
     const mockPO = {
       id: invoice.poNumber || "PO-2026-001",
       date: "2026-02-01",
       vendor: invoice.vendorName,
-      total: invoice.status === 'Verified' ? invoice.totalAmount || invoice.amount : (invoice.totalAmount || invoice.amount) + 100, // Discrepancy if not verified
-      items: (invoice.lineItems || invoice.items).map(item => ({
+      total: invoice.status === 'VERIFIED' ? invoice.totalAmount || invoice.amount : (invoice.totalAmount || invoice.amount) + 100,
+      items: (invoice.lineItems || invoice.items || []).map(item => ({
         ...item,
-        unitPrice: invoice.status === 'Verified' ? item.unitPrice : item.unitPrice * 1.1
+        unitPrice: invoice.status === 'VERIFIED' ? item.unitPrice : item.unitPrice * 1.1
       }))
     };
 
@@ -65,15 +68,9 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
     });
   }, [invoice, matchStatus]);
 
-  const [currentUser, setCurrentUser] = useState(null);
-
   useEffect(() => {
-    const { getCurrentUser } = require("@/utils/auth");
     setCurrentUser(getCurrentUser());
-
-    const handleAuthChange = () => {
-      setCurrentUser(getCurrentUser());
-    };
+    const handleAuthChange = () => setCurrentUser(getCurrentUser());
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);
@@ -81,13 +78,8 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   const handleMatch = async () => {
     setProcessing(true);
     try {
-      const { transitionWorkflow } = await import("@/lib/api");
-      const { updateInvoice } = await import("@/utils/storage");
-
       const response = await transitionWorkflow(invoice.id, 'APPROVE', "Automated match confirmed by user.");
-      updateInvoice(invoice.id, response.invoice);
       setInvoice(response.invoice);
-
       router.push("/matching");
     } catch (error) {
       console.error("Match approval error", error);
@@ -100,13 +92,8 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   const handleFlagException = async () => {
     setProcessing(true);
     try {
-      const { transitionWorkflow } = await import("@/lib/api");
-      const { updateInvoice } = await import("@/utils/storage");
-
       const response = await transitionWorkflow(invoice.id, 'REJECT', "Discrepancy flagged for manual review.");
-      updateInvoice(invoice.id, response.invoice);
       setInvoice(response.invoice);
-
       router.push("/matching");
     } catch (error) {
       console.error("Flag error", error);
@@ -118,7 +105,6 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   // Helper to check permissions
   const canApprove = () => {
     if (!currentUser) return false;
-    const { hasPermission } = require("@/utils/auth");
     return hasPermission(currentUser, 'APPROVE_MATCH');
   };
 
