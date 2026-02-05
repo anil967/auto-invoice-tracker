@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const invoices = await db.getInvoices();
     return NextResponse.json(invoices.sort((a, b) =>

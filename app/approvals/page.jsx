@@ -122,7 +122,7 @@ export default function ApprovalsPage() {
 
                 {/* Action */}
                 <Link href={`/approvals/${invoice.id}`} className="w-full">
-                  <button className="btn btn-warning btn-outline w-full hover:text-white! shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
+                  <button className="btn btn-warning btn-outline w-full hover:!text-white shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
                     Review & Approve
                     <Icon name="ArrowRight" size={18} />
                   </button>

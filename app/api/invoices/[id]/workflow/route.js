@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sendStatusNotification } from '@/lib/notifications';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request, { params }) {
     const { id } = params;
     const { action, comments } = await request.json();

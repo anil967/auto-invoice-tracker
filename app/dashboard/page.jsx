@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import Icon from "@/components/Icon";
 import { getAllInvoices } from "@/lib/api";
+import AnalyticsView from "@/components/Dashboard/AnalyticsView";
+import RoleSwitcher from "@/components/Dashboard/RoleSwitcher";
+import DropZone from "@/components/Dashboard/DropZone";
+import StatCard from "@/components/Dashboard/StatCard";
+import Card from "@/components/ui/Card";
+import { getCurrentUser, ROLES, getDelegation, clearDelegation, setDelegation } from "@/utils/auth";
 
 export default function DashboardPage() {
   const [invoices, setInvoices] = useState([]);
