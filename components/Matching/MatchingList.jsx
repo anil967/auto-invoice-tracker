@@ -63,10 +63,10 @@ const MatchingList = ({ invoices }) => {
             </div>
             <div className={clsx(
               "badge border-none font-semibold",
-              inv.status === 'VERIFIED' ? "badge-success text-white" :
-                inv.status === 'MATCH_DISCREPANCY' ? "badge-error text-white" : "badge-info bg-blue-500/10 text-blue-700"
+              invoice.status === 'VERIFIED' ? "badge-success text-white" :
+                invoice.status === 'MATCH_DISCREPANCY' ? "badge-error text-white" : "badge-info bg-blue-500/10 text-blue-700"
             )}>
-              {inv.status}
+              {invoice.status}
             </div>
           </div>
 
