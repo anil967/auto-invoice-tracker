@@ -4,6 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 
+import clsx from "clsx";
 import { getCurrentUser, ROLES } from "@/utils/auth";
 import { useState, useEffect } from "react";
 
@@ -22,7 +23,7 @@ const MatchingList = ({ invoices }) => {
     if (currentUser.role === ROLES.ADMIN) return true;
     if (currentUser.role === ROLES.PROJECT_MANAGER) {
       // PMs primarily handle Discrepancies or specific verification
-      return inv.status === 'Match Discrepancy' || inv.status === 'Verified';
+      return inv.status === 'MATCH_DISCREPANCY' || inv.status === 'VERIFIED';
     }
     return true; // Finance handles all
   });
@@ -62,10 +63,10 @@ const MatchingList = ({ invoices }) => {
             </div>
             <div className={clsx(
               "badge border-none font-semibold",
-              invoice.status === 'Verified' ? "badge-success text-white" :
-                invoice.status === 'Match Discrepancy' ? "badge-error text-white" : "badge-info bg-blue-500/10 text-blue-700"
+              inv.status === 'VERIFIED' ? "badge-success text-white" :
+                inv.status === 'MATCH_DISCREPANCY' ? "badge-error text-white" : "badge-info bg-blue-500/10 text-blue-700"
             )}>
-              {invoice.status}
+              {inv.status}
             </div>
           </div>
 
