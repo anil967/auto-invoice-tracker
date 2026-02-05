@@ -187,7 +187,7 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
             <div className="p-3 bg-white/50 rounded-lg">
               <p className="text-xs text-gray-500 uppercase">Total Amount</p>
               <p className="font-bold text-xl text-blue-600">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.amount)}
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(invoice.amount)}
               </p>
             </div>
 
@@ -244,7 +244,7 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
                 <p className="text-xs uppercase opacity-70">PO Total</p>
                 <div className="flex items-center justify-between">
                   <p className="font-bold text-xl">
-                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(purchaseOrder.total)}
+                    {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(purchaseOrder.total)}
                   </p>
                   {Math.abs(invoice.amount - purchaseOrder.total) > 0.01 && (
                     <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded">

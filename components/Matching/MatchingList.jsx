@@ -75,7 +75,7 @@ const MatchingList = ({ invoices }) => {
             <div className="flex justify-between items-center text-sm border-b border-gray-200/50 pb-2">
               <span className="text-gray-500">Amount</span>
               <span className="font-bold text-gray-800 text-lg">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.amount)}
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(invoice.amount)}
               </span>
             </div>
             <div className="flex justify-between items-center text-sm">

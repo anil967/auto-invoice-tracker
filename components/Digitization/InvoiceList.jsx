@@ -85,7 +85,7 @@ const InvoiceList = ({ invoices }) => {
 
             {/* Amount */}
             <div className="col-span-4 md:col-span-2 text-right font-bold text-gray-700">
-              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(invoice.amount)}
+              {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(invoice.amount)}
             </div>
 
             {/* Status */}

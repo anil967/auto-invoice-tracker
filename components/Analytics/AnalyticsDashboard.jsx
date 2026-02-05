@@ -121,7 +121,7 @@ const AnalyticsDashboard = () => {
             <div>
               <p className="text-gray-500 text-sm font-medium">Total Spend (YTD)</p>
               <h3 className="text-2xl font-bold text-gray-800 mt-2">
-                {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(kpis.totalSpend)}
+                {new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(kpis.totalSpend)}
               </h3>
             </div>
             <div className="p-3 bg-blue-500/10 rounded-xl text-blue-600">
