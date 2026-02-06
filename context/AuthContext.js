@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ROLES } from "@/utils/auth";
+import { startVersionCheck } from "@/lib/version";
 
 const AuthContext = createContext();
 
@@ -18,6 +19,10 @@ export const AuthProvider = ({ children }) => {
             setUser(JSON.parse(savedUser));
         }
         setIsLoading(false);
+
+        // Start version checking for auto-cache invalidation
+        const cleanup = startVersionCheck(60000); // Check every minute
+        return cleanup;
     }, []);
 
     const login = (email, password, role = ROLES.FINANCE_USER) => {
