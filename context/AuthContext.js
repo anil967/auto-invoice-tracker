@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ROLES } from "@/utils/auth";
-import { startVersionCheck } from "@/lib/version";
+import { startVersionCheck, autoUpdateOnVersionChange } from "@/lib/version";
 
 const AuthContext = createContext();
 
@@ -20,7 +20,10 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoading(false);
 
-        // Version checking enabled
+        // Check version IMMEDIATELY to prevent "old page" flash
+        autoUpdateOnVersionChange();
+
+        // Continue periodic checks
         const cleanup = startVersionCheck(60000); // Check every 1 minute
         return cleanup;
     }, []);
