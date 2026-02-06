@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
 import { motion } from "framer-motion";
 import clsx from "clsx";
+import { APP_VERSION } from "@/lib/version";
 
 const menuItems = [
   { name: "Dashboard", icon: "LayoutDashboard", path: "/dashboard" },
@@ -75,8 +76,13 @@ const Sidebar = () => {
           })}
         </nav>
 
-        {/* Footer User Profile - Removed as per request */}
-        {/* <div className="mt-auto pt-6 border-t border-gray-200/30"> ... </div> */}
+        {/* Version Indicator */}
+        <div className="mt-auto pt-6 border-t border-gray-200/30 flex justify-between items-center px-2">
+          <span className="text-xs font-mono text-gray-400">v{APP_VERSION}</span>
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-success/50 animate-pulse" title="System Online"></div>
+          </div>
+        </div>
       </div>
     </aside>
   );
