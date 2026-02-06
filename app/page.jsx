@@ -3,14 +3,40 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
+import { useAuth } from "@/context/AuthContext";
 
 export default function LandingPage() {
+  const { user, isLoading } = useAuth();
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background Decorative Elements - Overriding default layout background for unique landing feel */}
+      {/* Background Decorative Elements */}
       <div className="absolute inset-0 z-0 bg-linear-to-br from-indigo-100 via-purple-50 to-white">
         <div className="absolute top-0 left-0 w-full h-full opacity-30 bg-[radial-gradient(#4f46e5_1px,transparent_1px)] bg-size-[24px_24px]"></div>
       </div>
+
+      {/* Top Navigation for public access */}
+      <nav className="absolute top-0 left-0 w-full z-20 flex justify-between items-center p-6 px-8">
+        <div className="text-xl font-black bg-clip-text text-transparent bg-linear-to-r from-primary to-accent">
+          InvoiceFlow
+        </div>
+        <div className="flex gap-4">
+          {!isLoading && user ? (
+            <Link href="/dashboard">
+              <button className="btn btn-primary btn-sm md:btn-md rounded-full px-6 text-white shadow-lg shadow-primary/20">Dashboard</button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/login">
+                <button className="btn btn-ghost hover:bg-white/50 rounded-full px-6">Login</button>
+              </Link>
+              <Link href="/signup">
+                <button className="btn btn-primary btn-sm md:btn-md rounded-full px-6 text-white shadow-lg shadow-primary/20">Sign Up</button>
+              </Link>
+            </>
+          )}
+        </div>
+      </nav>
 
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
@@ -38,13 +64,13 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-          <Link href="/dashboard">
+          <Link href={!isLoading && user ? "/dashboard" : "/signup"}>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="btn btn-primary btn-lg rounded-full px-10 shadow-xl shadow-primary/30 border-none bg-linear-to-r from-primary to-accent text-white font-bold text-lg group"
             >
-              Enter Dashboard
+              {!isLoading && user ? "Enter Dashboard" : "Get Started Free"}
               <Icon name="ArrowRight" className="ml-2 group-hover:translate-x-1 transition-transform" />
             </motion.button>
           </Link>

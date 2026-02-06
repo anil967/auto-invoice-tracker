@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ROLES, DEFAULT_USER } from "@/utils/auth";
+import { ROLES } from "@/utils/auth";
 
 const AuthContext = createContext();
 

@@ -7,20 +7,21 @@ export const ROLES = {
     FINANCE_USER: 'Finance User',
     FINANCE_MANAGER: 'Finance Manager',
     ADMIN: 'Admin',
-    AUDITOR: 'Auditor'
+    AUDITOR: 'Auditor',
+    VENDOR: 'Vendor'
 };
 
-const DEFAULT_USER = {
+export const DEFAULT_USER = {
     id: 'user-001',
     name: 'Demo User',
     role: ROLES.FINANCE_USER // Default role
 };
 
 export const getCurrentUser = () => {
-    if (typeof window === 'undefined') return DEFAULT_USER;
+    if (typeof window === 'undefined') return null;
 
     const savedUser = localStorage.getItem('invoice_user');
-    return savedUser ? JSON.parse(savedUser) : DEFAULT_USER;
+    return savedUser ? JSON.parse(savedUser) : null;
 };
 
 export const switchRole = (role) => {

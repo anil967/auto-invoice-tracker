@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 
+
 const Navbar = () => {
   const [notifications] = useState(3);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
@@ -10,9 +11,12 @@ import RoleSwitcher from "@/components/Dashboard/RoleSwitcher";
 import DropZone from "@/components/Dashboard/DropZone";
 import StatCard from "@/components/Dashboard/StatCard";
 import Card from "@/components/ui/Card";
+import { useAuth } from "@/context/AuthContext";
 import { getCurrentUser, ROLES, getDelegation, clearDelegation, setDelegation } from "@/utils/auth";
 
 export default function DashboardPage() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [stats, setStats] = useState({
@@ -24,6 +28,13 @@ export default function DashboardPage() {
     discrepancyCount: 0
   });
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Protect route - redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push("/login");
+    }
+  }, [user, authLoading, router]);
 
   const fetchData = async () => {
     try {
@@ -81,6 +92,18 @@ export default function DashboardPage() {
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
   };
+
+  // Show loading state while checking authentication
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <span className="loading loading-spinner loading-lg text-primary"></span>
+          <p className="mt-4 text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 pb-10">
