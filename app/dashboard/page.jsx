@@ -19,6 +19,7 @@ export default function DashboardPage() {
   const { user, logout, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const dropZoneRef = useRef(null);
   const [stats, setStats] = useState({
     totalAmount: 0,
     pendingCount: 0,
