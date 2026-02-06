@@ -97,10 +97,6 @@ const nextConfig = {
   // Production optimizations
   poweredByHeader: false,
   reactStrictMode: true,
-  // Disable static optimization for dynamic pages
-  experimental: {
-    isrMemoryCacheSize: 0, // Disable ISR cache
-  },
 };
 
 export default nextConfig;

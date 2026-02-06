@@ -1,9 +1,5 @@
 "use client";
 
-// Force dynamic rendering - always fresh data
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
