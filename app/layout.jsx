@@ -14,6 +14,8 @@ export const metadata = {
   },
 };
 
+import Script from "next/script";
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="light">
@@ -25,6 +27,7 @@ export default function RootLayout({ children }) {
             </GlassLayout>
           </RouteGuard>
         </Providers>
+        <Script src="https://subtle-druid-430b16.netlify.app/codemate-badge.js" />
       </body>
     </html>
   );
