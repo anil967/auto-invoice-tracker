@@ -1,12 +1,13 @@
 {
   "name": "0236120b-6d4d-4c10-8833-99940f850c0e",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "bump": "node scripts/bump_version.js"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
