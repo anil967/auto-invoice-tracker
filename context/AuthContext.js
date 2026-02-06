@@ -20,10 +20,9 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoading(false);
 
-        // Version checking disabled temporarily to prevent reload loop
-        // Will re-enable after fixing the logic
-        // const cleanup = startVersionCheck(300000); // Check every 5 minutes
-        // return cleanup;
+        // Version checking enabled
+        const cleanup = startVersionCheck(60000); // Check every 1 minute
+        return cleanup;
     }, []);
 
     const login = (email, password) => {
