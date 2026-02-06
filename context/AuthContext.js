@@ -20,9 +20,10 @@ export const AuthProvider = ({ children }) => {
         }
         setIsLoading(false);
 
-        // Start version checking for auto-cache invalidation
-        const cleanup = startVersionCheck(60000); // Check every minute
-        return cleanup;
+        // Version checking disabled temporarily to prevent reload loop
+        // Will re-enable after fixing the logic
+        // const cleanup = startVersionCheck(300000); // Check every 5 minutes
+        // return cleanup;
     }, []);
 
     const login = (email, password, role = ROLES.FINANCE_USER) => {
