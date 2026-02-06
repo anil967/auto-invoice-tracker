@@ -2,9 +2,6 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { processInvoice } from '@/lib/processor';
 import { v4 as uuidv4 } from 'uuid';
-import { join } from 'path';
-import { writeFile } from 'fs/promises';
-import { mkdir } from 'fs/promises';
 
 export async function POST(request) {
     try {
@@ -16,23 +13,18 @@ export async function POST(request) {
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
-        const filename = `${Date.now()}-${file.name.replace(/\s/g, '_')}`;
-        const uploadDir = join(process.cwd(), 'public', 'uploads');
 
-        // Ensure directory exists
-        await mkdir(uploadDir, { recursive: true });
-
-        // Write file
-        const filePath = join(uploadDir, filename);
-        await writeFile(filePath, buffer);
-
-        const fileUrl = `/uploads/${filename}`;
+        // Vercel Fix: Do not write to filesystem (read-only).
+        // Convert to Base64 Data URI for immediate access/preview.
+        const base64String = buffer.toString('base64');
+        const mimeType = file.type || 'application/pdf'; // Default or actual
+        const fileUrl = `data:${mimeType};base64,${base64String}`;
 
         const invoiceId = `INV-${uuidv4().slice(0, 8).toUpperCase()}`;
         const invoiceMetadata = {
             id: invoiceId,
             originalName: file.name,
-            fileUrl: fileUrl, // Store accessible URL
+            fileUrl: fileUrl, // Accessible Data URI
             status: 'RECEIVED',
             receivedAt: new Date().toISOString(),
             ingestedAt: new Date().toISOString(),
@@ -44,13 +36,12 @@ export async function POST(request) {
         await db.saveInvoice(invoiceId, invoiceMetadata);
 
         // Perform processing inline (Simulation)
-        // NOTE: In production serverless, you'd use a background worker like Vercel Functions with Upstash QStash.
-        const result = await processInvoice(invoiceId, buffer); // Pass buffer for "OCR"
+        const result = await processInvoice(invoiceId, buffer);
 
         if (result.success) {
             await db.saveInvoice(invoiceId, {
                 ...result.data,
-                fileUrl: fileUrl, // Ensure it persists
+                fileUrl: fileUrl, // Use the Data URI
                 validation: result.validation,
                 matching: result.matching,
                 status: (result.validation.isValid && result.matching?.isMatched) ? 'VERIFIED' :
