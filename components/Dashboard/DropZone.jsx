@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
 import { ingestInvoice } from "@/lib/api";
 
-const DropZone = ({ onUploadComplete }) => {
+const DropZone = forwardRef(({ onUploadComplete }, ref) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -49,15 +49,21 @@ const DropZone = ({ onUploadComplete }) => {
     }
   }, [onUploadComplete]);
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject, open } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png']
     },
-    maxFiles: 5
+    maxFiles: 5,
+    noClick: false // Allow click on container
   });
+
+  // Expose open method to parent
+  useImperativeHandle(ref, () => ({
+    open: () => open()
+  }));
 
   return (
     <div className="w-full h-full min-h-[300px]">
@@ -136,7 +142,7 @@ const DropZone = ({ onUploadComplete }) => {
                 <span className="text-xs opacity-70">(PDF, JPG, PNG supported)</span>
               </p>
 
-              <button className="btn btn-outline btn-primary rounded-full px-8 border-2 font-bold hover:scale-105 transition-transform">
+              <button type="button" className="btn btn-outline btn-primary rounded-full px-8 border-2 font-bold hover:scale-105 transition-transform">
                 Browse Files
               </button>
             </motion.div>
@@ -157,6 +163,8 @@ const DropZone = ({ onUploadComplete }) => {
       </div>
     </div>
   );
-};
+});
+
+DropZone.displayName = "DropZone";
 
 export default DropZone;

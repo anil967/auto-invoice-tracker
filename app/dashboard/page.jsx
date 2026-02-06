@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -164,7 +164,10 @@ export default function DashboardPage() {
           )}
 
           <div className="flex gap-2">
-            <button className="btn btn-sm btn-primary text-white shadow-lg shadow-primary/30 rounded-full px-4">
+            <button
+              onClick={() => dropZoneRef.current?.open()}
+              className="btn btn-sm btn-primary text-white shadow-lg shadow-primary/30 rounded-full px-4"
+            >
               <Icon name="Plus" size={16} />
               <span>New Invoice</span>
             </button>
@@ -172,8 +175,8 @@ export default function DashboardPage() {
 
           {/* User Profile Section */}
           <div className="flex items-center gap-3 pl-4 border-l border-gray-300 ml-2">
-            <div className="text-right hidden md:block leading-tight">
-              <p className="text-sm font-bold text-gray-800">{user?.name || 'User'}</p>
+            <div className="text-right leading-tight">
+              <p className="text-sm font-bold text-gray-900">{user?.name || 'User'}</p>
               <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
                 {user?.role || 'Guest'}
               </span>
@@ -242,7 +245,7 @@ export default function DashboardPage() {
                   </button>
                 </div>
                 <div className="flex-1 min-h-[300px]">
-                  <DropZone onUploadComplete={handleUploadComplete} />
+                  <DropZone ref={dropZoneRef} onUploadComplete={handleUploadComplete} />
                 </div>
               </Card>
             </div>
