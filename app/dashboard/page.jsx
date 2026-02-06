@@ -16,7 +16,7 @@ import { getCurrentUser, ROLES, getDelegation, clearDelegation, setDelegation } 
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
+  const { user, logout, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [stats, setStats] = useState({
@@ -164,13 +164,26 @@ export default function DashboardPage() {
           )}
 
           <div className="flex gap-2">
-            <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm">
-              <Icon name="Calendar" size={16} />
-              <span>Oct 2023</span>
-            </button>
             <button className="btn btn-sm btn-primary text-white shadow-lg shadow-primary/30 rounded-full px-4">
               <Icon name="Plus" size={16} />
               <span>New Invoice</span>
+            </button>
+          </div>
+
+          {/* User Profile Section */}
+          <div className="flex items-center gap-3 pl-4 border-l border-gray-300 ml-2">
+            <div className="text-right hidden md:block leading-tight">
+              <p className="text-sm font-bold text-gray-800">{user?.name || 'User'}</p>
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                {user?.role || 'Guest'}
+              </span>
+            </div>
+            <button
+              onClick={logout}
+              className="btn btn-sm btn-circle btn-ghost text-gray-500 hover:text-error hover:bg-error/10 transition-colors"
+              title="Sign Out"
+            >
+              <Icon name="LogOut" size={20} />
             </button>
           </div>
         </div>
