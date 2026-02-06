@@ -1,11 +1,21 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getCurrentUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
     try {
-        const invoices = await db.getInvoices();
+        const user = await getCurrentUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const invoices = await db.getInvoices(user);
+
+        // Calculate analytics based on filtered invoices
+        const total = invoices.reduce((sum, inv) => sum + (inv.amount || 0), 0);
+        // ... rest of logic relies on invoices array which is now scoped!
 
         // 1. Cycle Time Calculation
         const paidInvoices = invoices.filter(inv => inv.status === 'PAID' && inv.paidAt && inv.ingestedAt);

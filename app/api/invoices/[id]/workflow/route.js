@@ -1,13 +1,22 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sendStatusNotification } from '@/lib/notifications';
+import { getCurrentUser } from '@/lib/server-auth';
+import { getCurrentUser } from '@/lib/server-auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request, { params }) {
     const { id } = await params;
     const { action, comments } = await request.json();
-    const userRole = request.headers.get('x-user-role');
+
+    // Strict Auth Check
+    const user = await getCurrentUser();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userRole = user.role;
     const { ROLES } = await import('@/constants/roles');
 
     const invoice = await db.getInvoice(id);

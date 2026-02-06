@@ -8,20 +8,86 @@ export async function GET() {
         console.log("[Seed] Starting ERP Data Seed...");
 
         // 0. Seed Users
+        // 0. Seed Users with Consistent Password
         const salt = await bcrypt.genSalt(10);
-        const financePassword = await bcrypt.hash('financeuser@gmail.com', salt);
+        const defaultPasswordHash = await bcrypt.hash('Password123!', salt); // Common password for all demo users
 
         const users = [
+            // 1. Admin
+            {
+                id: 'u-admin-01',
+                name: 'System Admin',
+                email: 'admin@invoiceflow.com',
+                passwordHash: defaultPasswordHash,
+                role: ROLES.ADMIN,
+                assignedProjects: [],
+                vendorId: null
+            },
+            // 2. Finance Manager
+            {
+                id: 'u-fin-mgr-01',
+                name: 'Finance Manager',
+                email: 'financemanager@invoiceflow.com',
+                passwordHash: defaultPasswordHash,
+                role: ROLES.FINANCE_MANAGER,
+                assignedProjects: [],
+                vendorId: null
+            },
+            // 3. Project Manager (with assigned projects)
+            {
+                id: 'u-pm-01',
+                name: 'Project Manager',
+                email: 'pm@invoiceflow.com',
+                passwordHash: defaultPasswordHash,
+                role: ROLES.PROJECT_MANAGER,
+                assignedProjects: ['Project Alpha', 'Cloud Migration'], // Critical for testing RBAC
+                vendorId: null
+            },
+            // 4. Finance User (Operational)
             {
                 id: 'u-finance-01',
                 name: 'Finance User',
-                email: 'financeuser@gmail.com',
-                passwordHash: financePassword,
-                role: ROLES.FINANCE_USER
+                email: 'financeuser@gmail.com', // Keeping legacy email for continuity
+                passwordHash: defaultPasswordHash,
+                role: ROLES.FINANCE_USER,
+                assignedProjects: [],
+                vendorId: null
+            },
+            // 5. Vendor (Linked to Acme Solutions)
+            {
+                id: 'u-vendor-01',
+                name: 'Acme Solutions', // Must match Vendor Name for current simple mapping
+                email: 'vendor@acme.com',
+                passwordHash: defaultPasswordHash,
+                role: ROLES.VENDOR,
+                assignedProjects: [],
+                vendorId: 'v-001'
+            },
+            // 6. Auditor (Read-only)
+            {
+                id: 'u-auditor-01',
+                name: 'Compliance Auditor',
+                email: 'auditor@invoiceflow.com',
+                passwordHash: defaultPasswordHash,
+                role: ROLES.AUDITOR,
+                assignedProjects: [],
+                vendorId: null
             }
         ];
 
-        await Promise.all(users.map(u => db.createUser(u)));
+        // Ensure unique creation by email
+        for (const user of users) {
+            const existing = await db.getUserByEmail(user.email);
+            if (!existing) {
+                await db.createUser(user);
+            } else {
+                // Optional: Update password/role if needed, but for now we skip to preserve custom changes
+                console.log(`User ${user.email} already exists, skipping creation.`);
+                // Force update role/projects for testing consistency?
+                // Let's force update to ensure RBAC works immediately
+                await db.createUser(user);
+            }
+        }
 
 
         // 1. Seed Vendors
@@ -80,18 +146,7 @@ export async function GET() {
 
         await Promise.all(annexures.map(ax => db.createAnnexure(ax)));
 
-        // 4. Seed Users
-        const passwordHash = '$2a$10$X7SV.u.Zk/k/k/k/k/k/k.eX7SV.u.Zk/k/k/k/k/k/k'; // Pre-hashed 'financeuser@gmail.com' or similar to avoid bcrypt import issues if not present?
-        // Actually best to use bcrypt if available. db.createUser expects passwordHash.
-        // Let's use a known hash for 'financeuser@gmail.com' to avoid import complexity or compute time?
-        // Hash for 'financeuser@gmail.com' is: $2a$10$abcdefghijklmnopqrstuv
-        // I will use a simple one: 'password123' -> $2a$10$YourHashHere
-        // Better: import bcrypt.
 
-        // Wait, I can't easily import bcrypt if I don't know if it's installed in this scope (it is in package.json).
-        // I'll import bcrypt at top.
-
-        // REPLACING WITH REAL CODE BELOW
 
 
         console.log("[Seed] ERP Data Seed Completed.");

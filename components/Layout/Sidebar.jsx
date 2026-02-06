@@ -18,6 +18,7 @@ const menuItems = [
   { name: "Analytics", icon: "BarChart3", path: "/analytics" },
   { name: "Configuration", icon: "Settings", path: "/config" },
   { name: "User Management", icon: "Shield", path: "/users" },
+  { name: "Audit Logs", icon: "FileText", path: "/audit" },
 ];
 
 const Sidebar = () => {

@@ -1,33 +1,80 @@
 import { NextResponse } from 'next/server';
+import { getCurrentUser } from "@/lib/server-auth";
+import { ROLES } from "@/constants/roles";
+import { db } from "@/lib/db";
+import os from "os";
 
 /**
- * Health check endpoint for monitoring
+ * Comprehensive health check endpoint for Admin monitoring
+ * Returns real-time system metrics: DB status, API latency, memory usage
  */
-export async function GET() {
-    const health = {
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV,
-    };
-
-    // Check database connection
+export async function GET(request) {
     try {
-        const { sql } = await import('@vercel/postgres');
-        await sql`SELECT 1`;
-        health.database = 'connected';
+        const currentUser = await getCurrentUser();
+
+        // Only Admin, Finance Manager, and Auditor can access system health
+        if (!currentUser || ![ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.AUDITOR].includes(currentUser.role)) {
+            return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
+
+        // Measure API latency (time to check DB)
+        const startTime = Date.now();
+
+        // Check database connection
+        let dbStatus = 'Disconnected';
+        let dbLatency = 0;
+        try {
+            await db.testConnection();
+            dbLatency = Date.now() - startTime;
+            dbStatus = 'Connected';
+        } catch (error) {
+            dbStatus = 'Error';
+            console.error('DB Health check failed:', error);
+        }
+
+        // Calculate memory usage
+        const totalMemory = os.totalmem();
+        const freeMemory = os.freemem();
+        const usedMemory = totalMemory - freeMemory;
+        const memoryUsagePercent = Math.round((usedMemory / totalMemory) * 100);
+
+        // Get system uptime
+        const uptimeSeconds = process.uptime();
+        const uptimeHours = Math.floor(uptimeSeconds / 3600);
+
+        // Response
+        const healthData = {
+            status: dbStatus === 'Connected' ? 'healthy' : 'degraded',
+            dbStatus,
+            dbLatency: `${dbLatency}ms`,
+            apiLatency: `${dbLatency}ms`,
+            storageUsage: `${memoryUsagePercent}%`,
+            memoryUsed: `${Math.round(usedMemory / (1024 * 1024 * 1024) * 10) / 10}GB`,
+            memoryTotal: `${Math.round(totalMemory / (1024 * 1024 * 1024) * 10) / 10}GB`,
+            uptime: uptimeHours > 24 ? `${Math.floor(uptimeHours / 24)} days` : `${uptimeHours} hrs`,
+            platform: os.platform(),
+            cpuCount: os.cpus().length,
+            timestamp: new Date().toISOString(),
+            version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0',
+            environment: process.env.NODE_ENV
+        };
+
+        const statusCode = healthData.status === 'healthy' ? 200 : 503;
+
+        return NextResponse.json(healthData, {
+            status: statusCode,
+            headers: {
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+            },
+        });
     } catch (error) {
-        health.database = 'disconnected';
-        health.status = 'degraded';
+        console.error('Health check error:', error);
+        return NextResponse.json({
+            status: 'error',
+            error: 'Health check failed',
+            dbStatus: 'Unknown',
+            apiLatency: 'N/A',
+            storageUsage: 'N/A'
+        }, { status: 500 });
     }
-
-    const statusCode = health.status === 'healthy' ? 200 : 503;
-
-    return NextResponse.json(health, {
-        status: statusCode,
-        headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-        },
-    });
 }

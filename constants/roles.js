@@ -20,7 +20,8 @@ export const MENU_PERMISSIONS = {
     'Vendors': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER],
     'Analytics': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.AUDITOR],
     'Configuration': [ROLES.ADMIN],
-    'User Management': [ROLES.ADMIN]
+    'User Management': [ROLES.ADMIN],
+    'Audit Logs': [ROLES.ADMIN, ROLES.AUDITOR, ROLES.FINANCE_MANAGER]
 };
 
 /**
@@ -29,7 +30,7 @@ export const MENU_PERMISSIONS = {
  * @param {string} action - Action to check permission for
  * @returns {boolean} - Whether user has permission
  */
-export const hasPermission = (user, action) => {
+export const hasPermission = (user, action, resource = null) => {
     if (!user) return false;
     if (user.role === ROLES.ADMIN) return true;
 
@@ -46,7 +47,14 @@ export const hasPermission = (user, action) => {
             return effectiveRole === ROLES.ADMIN;
 
         case 'APPROVE_MATCH':
-            return [ROLES.PROJECT_MANAGER, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER].includes(effectiveRole);
+            // PMs can only approve if the resource (invoice) belongs to their project
+            if (effectiveRole === ROLES.PROJECT_MANAGER) {
+                if (resource && resource.project) {
+                    return user.assignedProjects?.includes(resource.project);
+                }
+                return true; // General permission check
+            }
+            return [ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER].includes(effectiveRole);
 
         case 'FINALIZE_PAYMENT':
             return effectiveRole === ROLES.FINANCE_MANAGER;
@@ -63,7 +71,10 @@ export const hasPermission = (user, action) => {
             return [ROLES.VENDOR, ROLES.FINANCE_USER].includes(effectiveRole);
 
         case 'VIEW_ALL_INVOICES':
-            return [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER, ROLES.AUDITOR].includes(effectiveRole);
+            // Vendors and PMs have scoped views, so they don't have "VIEW_ALL"
+            // But they can view "Invoices", just a subset.
+            // This permission name might be misleading. Let's interpret it as "Access Invoice List"
+            return [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER, ROLES.AUDITOR, ROLES.PROJECT_MANAGER, ROLES.VENDOR].includes(effectiveRole);
 
         default:
             return false;
