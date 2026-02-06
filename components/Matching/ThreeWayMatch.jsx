@@ -8,7 +8,7 @@ import Button from "@/components/ui/Button";
 import { transitionWorkflow, getAllInvoices } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { hasPermission } from "@/utils/auth";
+import { hasPermission } from "@/constants/roles";
 import clsx from "clsx";
 
 const ThreeWayMatch = ({ invoice: initialInvoice }) => {

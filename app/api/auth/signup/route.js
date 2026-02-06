@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/db';
-import { login_session } from '@/lib/auth';
+import { login } from '@/lib/auth';
 
 export async function POST(request) {
     try {
@@ -39,7 +39,7 @@ export async function POST(request) {
         const savedUser = await db.createUser(newUser);
 
         // Start session
-        await login_session(savedUser);
+        await login(savedUser);
 
         return NextResponse.json({
             user: savedUser,

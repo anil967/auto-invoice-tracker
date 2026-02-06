@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { useAuth } from "@/context/AuthContext";
-import { ROLES } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 
 export default function SignupPage() {
     const { signup, isLoading } = useAuth();

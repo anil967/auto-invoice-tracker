@@ -18,7 +18,7 @@ import FinanceUserDashboard from "@/components/Dashboard/Roles/FinanceUserDashbo
 import AuditorDashboard from "@/components/Dashboard/Roles/AuditorDashboard";
 import VendorPortal from "@/components/Vendor/VendorPortal";
 import NotificationLog from "@/components/Workflow/NotificationLog";
-import { getCurrentUser, ROLES, getDelegation, clearDelegation, setDelegation } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 import { formatCurrency } from "@/utils/format";
 
 export default function DashboardPage() {

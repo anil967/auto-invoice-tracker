@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import clsx from "clsx";
 import { APP_VERSION } from "@/lib/version";
 import { useAuth } from "@/context/AuthContext";
-import { canSeeMenuItem } from "@/utils/auth";
+import { canSeeMenuItem } from "@/constants/roles";
 
 const menuItems = [
   { name: "Dashboard", icon: "LayoutDashboard", path: "/dashboard" },

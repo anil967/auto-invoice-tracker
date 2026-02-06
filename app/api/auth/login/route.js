@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
-import { login_session } from '@/lib/auth';
+import { login } from '@/lib/auth';
 
 export async function POST(request) {
     try {
@@ -41,7 +41,7 @@ export async function POST(request) {
         };
 
         // Start session
-        await login_session(sessionUser);
+        await login(sessionUser);
 
         return NextResponse.json({
             user: sessionUser,

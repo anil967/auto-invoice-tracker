@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { ROLES } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 import Icon from "@/components/Icon";
 
 const RoleSwitcher = () => {
@@ -19,8 +19,8 @@ const RoleSwitcher = () => {
                     key={role}
                     onClick={() => switchRole && switchRole(role)}
                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${user.role === role
-                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-105"
-                            : "text-slate-400 hover:text-indigo-600 hover:bg-white"
+                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-105"
+                        : "text-slate-400 hover:text-indigo-600 hover:bg-white"
                         }`}
                     title={`Switch view to ${role}`}
                 >

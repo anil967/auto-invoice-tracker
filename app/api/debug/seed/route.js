@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { ROLES } from '@/utils/auth';
+import { ROLES } from '@/constants/roles';
 
 export async function GET() {
     try {

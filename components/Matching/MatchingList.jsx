@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 
 import clsx from "clsx";
-import { ROLES } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 

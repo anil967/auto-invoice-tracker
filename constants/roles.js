@@ -1,5 +1,6 @@
 /**
- * Mock Authentication Utility
+ * Role and Permission Constants
+ * Extracted from utils/auth.js for production-grade architecture
  */
 
 export const ROLES = {
@@ -22,12 +23,17 @@ export const MENU_PERMISSIONS = {
     'User Management': [ROLES.ADMIN]
 };
 
+/**
+ * Check if user has permission for a specific action
+ * @param {Object} user - User object with role property
+ * @param {string} action - Action to check permission for
+ * @returns {boolean} - Whether user has permission
+ */
 export const hasPermission = (user, action) => {
     if (!user) return false;
     if (user.role === ROLES.ADMIN) return true;
 
-    const delegation = getDelegation();
-    const effectiveRole = (delegation && delegation.active) ? delegation.delegateTo : user.role;
+    const effectiveRole = user.role;
 
     // Auditor is strictly read-only
     if (effectiveRole === ROLES.AUDITOR && !action.startsWith('VIEW_')) {
@@ -64,36 +70,16 @@ export const hasPermission = (user, action) => {
     }
 };
 
+/**
+ * Check if user can see a specific menu item
+ * @param {Object} user - User object with role property
+ * @param {string} itemName - Menu item name
+ * @returns {boolean} - Whether user can see the menu item
+ */
 export const canSeeMenuItem = (user, itemName) => {
     if (!user) return false;
     if (user.role === ROLES.ADMIN) return true;
     const allowedRoles = MENU_PERMISSIONS[itemName];
     if (!allowedRoles) return true; // Default to visible if not defined
     return allowedRoles.includes(user.role);
-};
-export const getCurrentUser = () => {
-    if (typeof window === 'undefined') return null;
-    const savedUser = localStorage.getItem('invoice_user');
-    return savedUser ? JSON.parse(savedUser) : null;
-};
-
-export const getDelegation = () => {
-    if (typeof window === 'undefined') return null;
-    const delegation = localStorage.getItem('invoice_delegation');
-    return delegation ? JSON.parse(delegation) : null;
-};
-
-export const setDelegation = (delegateToRole) => {
-    const delegation = {
-        delegateTo: delegateToRole,
-        active: true,
-        grantedAt: new Date().toISOString()
-    };
-    localStorage.setItem('invoice_delegation', JSON.stringify(delegation));
-    window.dispatchEvent(new Event('auth-change'));
-};
-
-export const clearDelegation = () => {
-    localStorage.removeItem('invoice_delegation');
-    window.dispatchEvent(new Event('auth-change'));
 };

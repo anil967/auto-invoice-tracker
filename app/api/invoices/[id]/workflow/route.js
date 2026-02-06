@@ -8,7 +8,7 @@ export async function POST(request, { params }) {
     const { id } = await params;
     const { action, comments } = await request.json();
     const userRole = request.headers.get('x-user-role');
-    const { ROLES } = await import('@/utils/auth');
+    const { ROLES } = await import('@/constants/roles');
 
     const invoice = await db.getInvoice(id);
     if (!invoice) {

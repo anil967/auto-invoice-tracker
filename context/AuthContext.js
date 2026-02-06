@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ROLES } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 import { startVersionCheck, autoUpdateOnVersionChange } from "@/lib/version";
 
 const AuthContext = createContext();
@@ -17,12 +17,20 @@ export const AuthProvider = ({ children }) => {
         const checkSession = async () => {
             try {
                 const res = await fetch('/api/auth/me');
+
+                if (!res.ok) {
+                    // Start fresh if auth check fails
+                    setUser(null);
+                    return;
+                }
+
                 const data = await res.json();
                 if (data.user) {
                     setUser(data.user);
                 }
             } catch (error) {
                 console.error("Session check failed", error);
+                setUser(null);
             } finally {
                 setIsLoading(false);
             }
@@ -54,7 +62,6 @@ export const AuthProvider = ({ children }) => {
             }
 
             setUser(data.user);
-            localStorage.setItem("invoice_user", JSON.stringify(data.user)); // Sync for compat
             router.push("/dashboard");
         } catch (error) {
             console.error("Login failed", error);
@@ -80,7 +87,6 @@ export const AuthProvider = ({ children }) => {
             }
 
             setUser(data.user);
-            localStorage.setItem("invoice_user", JSON.stringify(data.user)); // Sync for compat
             router.push("/dashboard");
         } catch (error) {
             console.error("Signup failed", error);
@@ -94,7 +100,6 @@ export const AuthProvider = ({ children }) => {
         try {
             await fetch('/api/auth/logout', { method: 'POST' });
             setUser(null);
-            localStorage.removeItem("invoice_user"); // Clean up compat
             router.push("/login");
         } catch (error) {
             console.error("Logout failed", error);

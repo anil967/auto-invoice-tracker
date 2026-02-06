@@ -2,6 +2,7 @@ import "./globals.css";
 import GlassLayout from "@/components/Layout/GlassLayout";
 import Providers from "./providers";
 import RouteGuard from "@/components/Auth/RouteGuard";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata = {
   title: "InvoiceFlow - Intelligent Invoice Processing",
@@ -20,13 +21,15 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-theme="light">
       <body>
-        <Providers>
-          <RouteGuard>
-            <GlassLayout>
-              {children}
-            </GlassLayout>
-          </RouteGuard>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <RouteGuard>
+              <GlassLayout>
+                {children}
+              </GlassLayout>
+            </RouteGuard>
+          </Providers>
+        </ErrorBoundary>
         <Script src="https://subtle-druid-430b16.netlify.app/codemate-badge.js" />
       </body>
     </html>

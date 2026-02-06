@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { updateInvoiceApi, getInvoiceStatus } from "@/lib/api";
-import { ROLES } from "@/utils/auth";
+import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Card from "@/components/ui/Card";

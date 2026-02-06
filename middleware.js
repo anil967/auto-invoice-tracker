@@ -18,6 +18,20 @@ export async function middleware(request) {
     response.headers.set('X-Content-Type-Options', 'nosniff');
     response.headers.set('X-Frame-Options', 'SAMEORIGIN');
     response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+    // Content Security Policy (CSP)
+    const cspHeader = `
+        default-src 'self';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://subtle-druid-430b16.netlify.app;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: https:;
+        font-src 'self' data:;
+        connect-src 'self';
+        frame-ancestors 'self';
+    `.replace(/\s{2,}/g, ' ').trim();
+    response.headers.set('Content-Security-Policy', cspHeader);
 
     // CORS headers for API routes
     if (pathname.startsWith('/api/')) {
