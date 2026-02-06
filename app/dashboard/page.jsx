@@ -75,13 +75,22 @@ export default function DashboardPage() {
   }, []);
 
   const filteredInvoices = invoices.filter(inv => {
-    if (!currentUser) return true;
-    if (currentUser.role === ROLES.ADMIN) return true;
-    if (currentUser.role === ROLES.PROJECT_MANAGER) {
-      // PMs only see Verified or Discrepancy invoices waiting for their input
+    if (!currentUser) return false;
+
+    const role = currentUser.role;
+
+    // 1. Full Access Roles
+    if ([ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER, ROLES.AUDITOR].includes(role)) {
+      return true;
+    }
+
+    // 2. Project Managers - Specific Statuses Only
+    if (role === ROLES.PROJECT_MANAGER) {
       return ['VERIFIED', 'MATCH_DISCREPANCY', 'PENDING_APPROVAL'].includes(inv.status);
     }
-    return true; // Finance sees all
+
+    // 3. Vendors / Others - No Access (Pending Vendor Portal)
+    return false;
   });
 
   const handleUploadComplete = () => {

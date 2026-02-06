@@ -20,6 +20,11 @@ const RoleSwitcher = () => {
 
     if (!user) return null;
 
+    // Hide in production
+    if (process.env.NODE_ENV === 'production') {
+        return null;
+    }
+
     return (
         <div className="flex items-center gap-2 p-1 bg-white/40 backdrop-blur-md rounded-full border border-white/60 shadow-sm">
             {Object.values(ROLES).map((role) => (
