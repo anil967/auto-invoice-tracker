@@ -5,13 +5,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { useAuth } from "@/context/AuthContext";
-import { ROLES } from "@/utils/auth";
 
 export default function LoginPage() {
     const { login, isLoading } = useAuth();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [role, setRole] = useState(ROLES.FINANCE_USER);
     const [error, setError] = useState("");
 
     const handleSubmit = (e) => {
@@ -21,7 +19,7 @@ export default function LoginPage() {
             return;
         }
 
-        login(email, password, role);
+        login(email, password);
     };
 
     return (
@@ -85,22 +83,6 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-900 ml-1">Simulate Role</label>
-                            <div className="relative">
-                                <Icon name="Shield" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="select w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900"
-                                >
-                                    {Object.values(ROLES).map((r) => (
-                                        <option key={r} value={r} className="text-gray-900 bg-white">{r}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <p className="text-xs text-gray-500 ml-1">For demo purposes only</p>
-                        </div>
 
                         <button
                             type="submit"
