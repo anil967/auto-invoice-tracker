@@ -83,7 +83,10 @@ export default function InvoiceDetailPage() {
               </div>
             </div>
             <div className="flex-1 relative">
-              <OCRScanner imageUrl="https://picsum.photos/600/800" isScanning={invoice.status === 'Digitizing'} />
+              <OCRScanner
+                imageUrl={invoice.fileUrl || "https://picsum.photos/600/800"}
+                isScanning={invoice.status === 'DIGITIZING' || invoice.status === 'RECEIVED'}
+              />
             </div>
           </div>
         </motion.div>

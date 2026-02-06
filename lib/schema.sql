@@ -25,3 +25,68 @@ CREATE TABLE IF NOT EXISTS audit_trail (
     action TEXT,
     details TEXT
 );
+
+-- Create vendors table
+CREATE TABLE IF NOT EXISTS vendors (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT,
+    phone TEXT,
+    address TEXT,
+    tax_id TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create purchase_orders table
+CREATE TABLE IF NOT EXISTS purchase_orders (
+    id TEXT PRIMARY KEY,
+    po_number TEXT UNIQUE NOT NULL,
+    vendor_id TEXT REFERENCES vendors(id),
+    date TEXT,
+    total_amount DECIMAL(15, 2),
+    currency TEXT DEFAULT 'USD',
+    status TEXT DEFAULT 'OPEN', -- OPEN, CLOSED, CANCELLED
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create po_items table (Line Items for POs)
+CREATE TABLE IF NOT EXISTS po_items (
+    id SERIAL PRIMARY KEY,
+    po_id TEXT REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    description TEXT,
+    quantity DECIMAL(10, 2),
+    unit_price DECIMAL(15, 2),
+    amount DECIMAL(15, 2),
+    gl_account TEXT
+);
+
+-- Create annexures table (Ringi)
+CREATE TABLE IF NOT EXISTS annexures (
+    id TEXT PRIMARY KEY,
+    annexure_number TEXT UNIQUE NOT NULL,
+    po_id TEXT REFERENCES purchase_orders(id),
+    original_amount DECIMAL(15, 2),
+    approved_amount DECIMAL(15, 2), -- The limit that can be invoiced
+    description TEXT,
+    status TEXT DEFAULT 'APPROVED',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create notifications table
+CREATE TABLE IF NOT EXISTS notifications (
+    id SERIAL PRIMARY KEY,
+    recipient_email TEXT,
+    subject TEXT,
+    message TEXT,
+    status TEXT DEFAULT 'SENT', -- SENT, FAILED
+    sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    related_entity_id TEXT -- e.g., Invoice ID
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_vendor ON invoices(vendor_name);
+CREATE INDEX IF NOT EXISTS idx_po_vendor ON purchase_orders(vendor_id);
+

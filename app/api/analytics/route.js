@@ -31,6 +31,21 @@ export async function GET() {
         return acc;
     }, {});
 
+    // 5. Volume Over Time (Last 5 Days)
+    const volumeOverTime = [];
+    for (let i = 4; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const dateStr = d.toISOString().split('T')[0];
+
+        const count = invoices.filter(inv =>
+            (inv.receivedAt || inv.created_at || '').startsWith(dateStr)
+        ).length;
+
+        volumeOverTime.push({ name: dayName, value: count });
+    }
+
     return NextResponse.json({
         metrics: {
             avgCycleTimeHours: (avgCycleTime / (1000 * 60 * 60)).toFixed(1),
@@ -39,13 +54,7 @@ export async function GET() {
             paidInvoices: paidInvoices.length,
             savingsEstimated: (paidInvoices.length * 45).toFixed(0)
         },
-        volumeOverTime: [
-            { name: 'Mon', value: 4 },
-            { name: 'Tue', value: 7 },
-            { name: 'Wed', value: 5 },
-            { name: 'Thu', value: 9 },
-            { name: 'Fri', value: 12 },
-        ],
+        volumeOverTime,
         statusCounts,
         categoryVolume
     });
