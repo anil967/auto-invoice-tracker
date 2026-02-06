@@ -97,6 +97,12 @@ const nextConfig = {
   // Production optimizations
   poweredByHeader: false,
   reactStrictMode: true,
+  // Disable static optimization for dynamic pages
+  experimental: {
+    isrMemoryCacheSize: 0, // Disable ISR cache
+  },
+  // Output configuration
+  output: 'standalone',
 };
 
 export default nextConfig;

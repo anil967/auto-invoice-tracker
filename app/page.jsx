@@ -1,6 +1,11 @@
 "use client";
 
 import Link from "next/link";
+
+// Force dynamic rendering - no static optimization
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { useAuth } from "@/context/AuthContext";
