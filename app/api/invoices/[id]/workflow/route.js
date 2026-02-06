@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { sendStatusNotification } from '@/lib/notifications';
 import { getCurrentUser } from '@/lib/server-auth';
-import { getCurrentUser } from '@/lib/server-auth';
+
 
 export const dynamic = 'force-dynamic';
 
