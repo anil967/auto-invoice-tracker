@@ -101,8 +101,6 @@ const nextConfig = {
   experimental: {
     isrMemoryCacheSize: 0, // Disable ISR cache
   },
-  // Output configuration
-  output: 'standalone',
 };
 
 export default nextConfig;
