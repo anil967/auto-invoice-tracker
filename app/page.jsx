@@ -103,20 +103,6 @@ export default function LandingPage() {
         </motion.div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 py-12 bg-white/50 backdrop-blur-xl border-t border-white/60">
-        <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8 text-sm text-gray-500">
-          <div className="flex items-center gap-4">
-            <span className="font-bold text-gray-700">© 2026 InvoiceFlow Technologies</span>
-            <span>•</span>
-            <Link href="#" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link href="#" className="hover:text-primary transition-colors">Terms of Service</Link>
-          </div>
-          <div className="flex gap-4">
-            <span className="text-xs text-gray-400">Powered by Next.js & Vercel</span>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
