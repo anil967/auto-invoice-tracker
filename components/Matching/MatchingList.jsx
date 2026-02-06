@@ -5,23 +5,17 @@ import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 
 import clsx from "clsx";
-import { getCurrentUser, ROLES } from "@/utils/auth";
+import { ROLES } from "@/utils/auth";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
 
 const MatchingList = ({ invoices }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-
-  useEffect(() => {
-    setCurrentUser(getCurrentUser());
-    const handleAuthChange = () => setCurrentUser(getCurrentUser());
-    window.addEventListener('auth-change', handleAuthChange);
-    return () => window.removeEventListener('auth-change', handleAuthChange);
-  }, []);
+  const { user } = useAuth();
 
   const filteredInvoices = invoices.filter(inv => {
-    if (!currentUser) return true;
-    if (currentUser.role === ROLES.ADMIN) return true;
-    if (currentUser.role === ROLES.PROJECT_MANAGER) {
+    if (!user) return true;
+    if (user.role === ROLES.ADMIN) return true;
+    if (user.role === ROLES.PROJECT_MANAGER) {
       // PMs primarily handle Discrepancies or specific verification
       return inv.status === 'MATCH_DISCREPANCY' || inv.status === 'VERIFIED';
     }

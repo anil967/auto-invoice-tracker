@@ -1,51 +1,40 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getCurrentUser, switchRole, ROLES } from "@/utils/auth";
+import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/utils/auth";
 import Icon from "@/components/Icon";
 
 const RoleSwitcher = () => {
-    const [user, setUser] = useState(null);
+    const { user, switchRole } = useAuth();
 
-    useEffect(() => {
-        setUser(getCurrentUser());
+    if (!user || user.role !== ROLES.ADMIN && user.role !== ROLES.PROJECT_MANAGER) return null;
 
-        const handleAuthChange = () => {
-            setUser(getCurrentUser());
-        };
-
-        window.addEventListener('auth-change', handleAuthChange);
-        return () => window.removeEventListener('auth-change', handleAuthChange);
-    }, []);
-
-    if (!user) return null;
-
-    // Hide in production
-    if (process.env.NODE_ENV === 'production') {
-        return null;
-    }
+    // Allow Admins to switch to any role for testing
+    // Allow PMs to switch to Finance roles if needed (optional logic)
 
     return (
-        <div className="flex items-center gap-2 p-1 bg-white/40 backdrop-blur-md rounded-full border border-white/60 shadow-sm">
+        <div className="hidden xl:flex items-center gap-1 p-1 bg-slate-100/80 rounded-xl border border-slate-200/60">
             {Object.values(ROLES).map((role) => (
                 <button
                     key={role}
-                    onClick={() => switchRole(role)}
-                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all duration-300 flex items-center gap-1 ${user.role === role
-                        ? "bg-primary text-white shadow-md shadow-primary/20"
-                        : "text-gray-500 hover:bg-white/50"
+                    onClick={() => switchRole && switchRole(role)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${user.role === role
+                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 scale-105"
+                            : "text-slate-400 hover:text-indigo-600 hover:bg-white"
                         }`}
+                    title={`Switch view to ${role}`}
                 >
                     <Icon
                         name={
                             role === ROLES.ADMIN ? "Shield" :
                                 role === ROLES.PROJECT_MANAGER ? "Briefcase" :
                                     role === ROLES.AUDITOR ? "Eye" :
-                                        role === ROLES.FINANCE_MANAGER ? "Award" : "DollarSign"
+                                        role === ROLES.FINANCE_MANAGER ? "Award" :
+                                            role === ROLES.VENDOR ? "Store" : "DollarSign"
                         }
                         size={12}
                     />
-                    {role}
+                    {role.replace('_', ' ')}
                 </button>
             ))}
         </div>

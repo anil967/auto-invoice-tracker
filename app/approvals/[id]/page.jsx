@@ -51,6 +51,8 @@ export default function ApprovalDetailPage() {
     );
   }
 
+  if (!invoice) return null;
+
   // Check if invoice is already processed to disable actions
   const isProcessed = invoice.status === "APPROVED" || invoice.status === "REJECTED";
 

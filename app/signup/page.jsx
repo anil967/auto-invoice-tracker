@@ -15,15 +15,19 @@ export default function SignupPage() {
     const [role, setRole] = useState(ROLES.FINANCE_USER); // Default role
     const [error, setError] = useState("");
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
         if (!name || !email || !password) {
             setError("Please fill in all fields");
             return;
         }
 
-        // Auto-select role based on email approximation (optional feature) or keep default
-        signup(name, email, password, role);
+        try {
+            await signup(name, email, password, role);
+        } catch (err) {
+            setError(err.message || "Failed to create account");
+        }
     };
 
     return (

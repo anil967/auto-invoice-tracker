@@ -12,13 +12,23 @@ export const AuthProvider = ({ children }) => {
     const [isLoading, setIsLoading] = useState(true);
     const router = useRouter();
 
-    // Load user from localStorage on mount
+    // Check for existing session on mount
     useEffect(() => {
-        const savedUser = localStorage.getItem("invoice_user");
-        if (savedUser) {
-            setUser(JSON.parse(savedUser));
-        }
-        setIsLoading(false);
+        const checkSession = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                const data = await res.json();
+                if (data.user) {
+                    setUser(data.user);
+                }
+            } catch (error) {
+                console.error("Session check failed", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkSession();
 
         // Check version IMMEDIATELY to prevent "old page" flash
         autoUpdateOnVersionChange();
@@ -28,76 +38,79 @@ export const AuthProvider = ({ children }) => {
         return cleanup;
     }, []);
 
-    const login = (email, password) => {
+    const login = async (email, password) => {
         setIsLoading(true);
-
-        // 1. Try to find user in our mock DB
-        let storedUser = null;
         try {
-            const usersDb = JSON.parse(localStorage.getItem("invoice_users_db") || "[]");
-            storedUser = usersDb.find(u => u.email.toLowerCase() === email.toLowerCase());
-        } catch (e) {
-            console.error("Failed to read user db", e);
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Login failed');
+            }
+
+            setUser(data.user);
+            localStorage.setItem("invoice_user", JSON.stringify(data.user)); // Sync for compat
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Login failed", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
         }
-
-        // 2. If found, use their role. If not, default to FINANCE_USER (demo fallback)
-        const role = storedUser ? storedUser.role : ROLES.FINANCE_USER;
-        const name = storedUser ? storedUser.name : email.split("@")[0];
-
-        const newUser = {
-            id: storedUser?.id || "usr_" + Math.random().toString(36).substr(2, 9),
-            name: name,
-            email,
-            role: role,
-            avatar: `https://i.pravatar.cc/150?u=${email}`,
-        };
-
-        // Save active session
-        localStorage.setItem("invoice_user", JSON.stringify(newUser));
-        setUser(newUser);
-        setIsLoading(false);
-
-        // Redirect to dashboard
-        router.push("/dashboard");
     };
 
-    const signup = (name, email, password, role = ROLES.FINANCE_USER) => {
+    const signup = async (name, email, password, role = ROLES.FINANCE_USER) => {
         setIsLoading(true);
-
-        const newUser = {
-            id: "usr_" + Math.random().toString(36).substr(2, 9),
-            name,
-            email,
-            role,
-            avatar: `https://i.pravatar.cc/150?u=${email}`,
-        };
-
-        // 1. Save to Mock DB (Persistence)
         try {
-            const usersDb = JSON.parse(localStorage.getItem("invoice_users_db") || "[]");
-            // Remove existing if any (update)
-            const filteredDb = usersDb.filter(u => u.email.toLowerCase() !== email.toLowerCase());
-            filteredDb.push(newUser);
-            localStorage.setItem("invoice_users_db", JSON.stringify(filteredDb));
-        } catch (e) {
-            console.error("Failed to save to user db", e);
-        }
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password, role }),
+            });
 
-        // 2. Set Active Session
-        localStorage.setItem("invoice_user", JSON.stringify(newUser));
-        setUser(newUser);
-        setIsLoading(false);
-        router.push("/dashboard");
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || 'Signup failed');
+            }
+
+            setUser(data.user);
+            localStorage.setItem("invoice_user", JSON.stringify(data.user)); // Sync for compat
+            router.push("/dashboard");
+        } catch (error) {
+            console.error("Signup failed", error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const logout = () => {
-        localStorage.removeItem("invoice_user");
-        setUser(null);
-        router.push("/login");
+    const logout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            setUser(null);
+            localStorage.removeItem("invoice_user"); // Clean up compat
+            router.push("/login");
+        } catch (error) {
+            console.error("Logout failed", error);
+        }
+    };
+
+    const switchRole = (newRole) => {
+        if (!user) return;
+        const updatedUser = { ...user, role: newRole };
+        setUser(updatedUser);
+        // Optional: Update localStorage if we want it to persist across soft reloads, 
+        // but typically role switching is a temporary admin action.
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, signup, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, login, signup, logout, switchRole, isLoading }}>
             {children}
         </AuthContext.Provider>
     );

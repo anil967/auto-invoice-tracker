@@ -12,14 +12,19 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
+        setError("");
         if (!email || !password) {
             setError("Please fill in all fields");
             return;
         }
 
-        login(email, password);
+        try {
+            await login(email, password);
+        } catch (err) {
+            setError(err.message || "Invalid email or password");
+        }
     };
 
     return (

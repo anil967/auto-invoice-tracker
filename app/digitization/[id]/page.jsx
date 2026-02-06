@@ -50,6 +50,9 @@ export default function InvoiceDetailPage() {
     );
   }
 
+  // Final guard to prevent crashes during redirect transition
+  if (!invoice) return null;
+
   return (
     <div className="flex flex-col h-full max-w-7xl mx-auto space-y-4">
       {/* Navigation Breadcrumb */}
@@ -58,7 +61,7 @@ export default function InvoiceDetailPage() {
           <Icon name="ArrowLeft" size={14} /> Back to List
         </Link>
         <span>/</span>
-        <span className="font-semibold text-gray-700">{invoice.id}</span>
+        <span className="font-semibold text-gray-700">{invoice?.id || '...'}</span>
         <span>/</span>
         <span className="text-primary">Validation</span>
       </div>

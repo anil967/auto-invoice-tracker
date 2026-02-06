@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { updateInvoiceApi, getInvoiceStatus } from "@/lib/api";
-import { getCurrentUser, ROLES } from "@/utils/auth";
-import Button from "@/components/ui/Button";
-import Card from "@/components/ui/Card";
-import Icon from "@/components/Icon";
+import { ROLES } from "@/utils/auth";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Icon from "@/components/Icon";
 
 const ValidationForm = ({ invoice: initialInvoice }) => {
   const router = useRouter();
@@ -19,6 +21,7 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
     category: "",
     costCenter: "",
     accountCode: "",
+    poNumber: "",
     id: ""
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -34,6 +37,7 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
         category: invoice.category || "Uncategorized",
         costCenter: invoice.costCenter || "",
         accountCode: invoice.accountCode || "",
+        poNumber: invoice.poNumber || "",
         id: invoice.id
       });
       if (invoice.confidence) {
@@ -90,224 +94,262 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
     }
   };
 
-  const [currentUser, setCurrentUser] = useState(null);
-  const isAuditor = currentUser?.role === ROLES.AUDITOR;
-
-  useEffect(() => {
-    setCurrentUser(getCurrentUser());
-
-    const handleAuthChange = () => {
-      setCurrentUser(getCurrentUser());
-    };
-    window.addEventListener('auth-change', handleAuthChange);
-    return () => window.removeEventListener('auth-change', handleAuthChange);
-  }, []);
+  const { user } = useAuth();
+  const isAuditor = user?.role === ROLES.AUDITOR;
 
   return (
-    <Card className="h-full flex flex-col bg-white/60 border-white/60">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Icon name="CheckSquare" className="text-primary" />
-            {isAuditor ? "Review Mode (Read-Only)" : "Validate Data"}
-          </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {isAuditor ? "Auditing extracted information." : "Review extracted information below."}
-          </p>
+    <Card className="h-full flex flex-col bg-white/40 border-white/60 backdrop-blur-xl overflow-hidden rounded-[2rem] shadow-2xl">
+      {/* Scrollable Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8 space-y-8">
+
+        {/* Modern Header */}
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+              <span className="p-2 bg-primary/10 rounded-xl">
+                <Icon name="CheckSquare" className="text-primary" size={24} />
+              </span>
+              {isAuditor ? "Review Invoice" : "Validate Data"}
+            </h2>
+            <p className="text-slate-500 font-medium">
+              {isAuditor ? "Verify extracted fields match the source." : "Correct any mismatches detected by AI."}
+            </p>
+          </div>
+
+          <div className="flex flex-col items-end gap-1">
+            <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">AI Confidence</div>
+            <div className={`text-2xl font-black ${confidence > 90 ? 'text-emerald-500' : confidence > 70 ? 'text-amber-500' : 'text-rose-500'}`}>
+              {confidence}%
+            </div>
+            <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${confidence}%` }}
+                className={`h-full ${confidence > 90 ? 'bg-emerald-500' : confidence > 70 ? 'bg-amber-500' : 'bg-rose-500'}`}
+              />
+            </div>
+          </div>
         </div>
-        <div className="radial-progress text-primary text-xs font-bold" style={{ "--value": confidence, "--size": "3rem" }} role="progressbar">
-          {confidence}%
-        </div>
+
+        <form className="space-y-8 pb-4">
+
+          {/* Section 1: Vendor & Document */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-2">
+              <Icon name="FileText" size={14} /> Document Information
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Vendor/Merchant</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                    <Icon name="Store" size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="vendorName"
+                    value={formData.vendorName}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="Identifying..."
+                    className="w-full pl-12 pr-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-slate-800 disabled:opacity-50"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Invoice Number</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                    <Icon name="Hash" size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="invoiceNumber"
+                    value={formData.invoiceNumber || ""}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="e.g. INV-2024..."
+                    className="w-full pl-12 pr-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono font-bold text-slate-800 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Purchase Order (PO) #</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary transition-colors">
+                    <Icon name="ShoppingCart" size={18} />
+                  </div>
+                  <input
+                    type="text"
+                    name="poNumber"
+                    value={formData.poNumber || ""}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="e.g. PO-2026-001"
+                    className="w-full pl-12 pr-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono font-bold text-slate-800 disabled:opacity-50"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Dates & Financials */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-2">
+              <Icon name="DollarSign" size={14} /> Financial context
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Issue Date</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  readOnly={isAuditor}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-slate-800"
+                  required
+                />
+              </div>
+
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Due Date</label>
+                <input
+                  type="date"
+                  name="dueDate"
+                  value={formData.dueDate}
+                  onChange={handleChange}
+                  readOnly={isAuditor}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-slate-800"
+                />
+              </div>
+
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Total Amount (INR)</label>
+                <div className="relative group">
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400 group-focus-within:text-primary transition-colors">₹</div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="0.00"
+                    className="w-full pl-8 pr-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-black text-slate-800 text-lg"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Cost allocation */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 border-b border-slate-100 pb-2">
+              <Icon name="Target" size={14} /> Cost Allocation
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="form-control w-full space-y-1.5">
+                <label className="text-xs font-bold text-slate-600 ml-1">Category</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  disabled={isAuditor}
+                  className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-semibold text-slate-800 appearance-none"
+                >
+                  <option value="Uncategorized">Uncategorized</option>
+                  <option value="IT Infrastructure">IT Infrastructure</option>
+                  <option value="Office Supplies">Office Supplies</option>
+                  <option value="Marketing">Marketing</option>
+                  <option value="Software">Software</option>
+                  <option value="Logistics">Logistics</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="form-control w-full space-y-1.5">
+                  <label className="text-xs font-bold text-slate-600 ml-1">Cost Center</label>
+                  <input
+                    type="text"
+                    name="costCenter"
+                    value={formData.costCenter}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="e.g. CC-101"
+                    className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono font-bold text-slate-800 uppercase"
+                  />
+                </div>
+                <div className="form-control w-full space-y-1.5">
+                  <label className="text-xs font-bold text-slate-600 ml-1">GL Code</label>
+                  <input
+                    type="text"
+                    name="accountCode"
+                    value={formData.accountCode}
+                    onChange={handleChange}
+                    readOnly={isAuditor}
+                    placeholder="e.g. GL-5000"
+                    className="w-full px-4 py-3 bg-white/50 border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono font-bold text-slate-800 uppercase"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Validation Errors/Warnings with improved styling */}
+          {(invoice?.validation?.errors?.length > 0 || invoice?.validation?.warnings?.length > 0) && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-4 rounded-2xl bg-rose-50 border border-rose-100 space-y-3 shadow-inner"
+            >
+              {(invoice?.validation?.errors || []).map((err, i) => (
+                <div key={i} className="flex items-start gap-3 text-rose-600 text-xs font-bold">
+                  <Icon name="AlertCircle" size={16} className="shrink-0" />
+                  <span>{err}</span>
+                </div>
+              ))}
+              {(invoice?.validation?.warnings || []).map((warn, i) => (
+                <div key={i} className="flex items-start gap-3 text-amber-600 text-xs font-bold">
+                  <Icon name="AlertTriangle" size={16} className="shrink-0" />
+                  <span>{warn}</span>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
+        </form>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-5 overflow-y-auto pr-2 custom-scrollbar">
-
-        {/* Vendor Information */}
-        <div className="form-control w-full">
-          <label className="label">
-            <span className="label-text font-semibold flex items-center gap-2">
-              <Icon name="Store" size={16} /> Vendor Name
-            </span>
-          </label>
-          <input
-            type="text"
-            name="vendorName"
-            value={formData.vendorName}
-            onChange={handleChange}
-            readOnly={isAuditor}
-            placeholder="e.g. Acme Corp"
-            className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary transition-colors disabled:bg-gray-100"
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Invoice Date */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="Calendar" size={16} /> Invoice Date
-              </span>
-            </label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              readOnly={isAuditor}
-              className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary disabled:bg-gray-100"
-              required
-            />
-          </div>
-
-          {/* Due Date */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="Clock" size={16} /> Due Date
-              </span>
-            </label>
-            <input
-              type="date"
-              name="dueDate"
-              value={formData.dueDate}
-              readOnly={isAuditor}
-              onChange={handleChange}
-              className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Amount */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="DollarSign" size={16} /> Total Amount
-              </span>
-            </label>
-            <input
-              type="number"
-              step="0.01"
-              name="amount"
-              value={formData.amount}
-              readOnly={isAuditor}
-              onChange={handleChange}
-              placeholder="0.00"
-              className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary font-mono disabled:bg-gray-100"
-              required
-            />
-          </div>
-
-          {/* Category */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="Tag" size={16} /> Category
-              </span>
-            </label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              disabled={isAuditor}
-              className="select select-bordered w-full bg-white/50 focus:bg-white focus:border-primary disabled:bg-gray-100"
-            >
-              <option value="" disabled>Select Category</option>
-              <option value="IT Infrastructure">IT Infrastructure</option>
-              <option value="Office Supplies">Office Supplies</option>
-              <option value="Marketing">Marketing</option>
-              <option value="Software">Software</option>
-              <option value="Logistics">Logistics</option>
-              <option value="Uncategorized">Uncategorized</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {/* Cost Center */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="Target" size={16} /> Cost Center
-              </span>
-            </label>
-            <input
-              type="text"
-              name="costCenter"
-              value={formData.costCenter}
-              readOnly={isAuditor}
-              onChange={handleChange}
-              placeholder="e.g. CC-101"
-              className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary font-mono disabled:bg-gray-100"
-            />
-          </div>
-
-          {/* Account Code */}
-          <div className="form-control w-full">
-            <label className="label">
-              <span className="label-text font-semibold flex items-center gap-2">
-                <Icon name="Hash" size={16} /> Account Code
-              </span>
-            </label>
-            <input
-              type="text"
-              name="accountCode"
-              value={formData.accountCode}
-              readOnly={isAuditor}
-              onChange={handleChange}
-              placeholder="e.g. GL-5000"
-              className="input input-bordered w-full bg-white/50 focus:bg-white focus:border-primary font-mono disabled:bg-gray-100"
-            />
-          </div>
-        </div>
-
-        {/* Validation Feedback */}
-        {(invoice?.validation?.errors?.length > 0 || invoice?.validation?.warnings?.length > 0) && (
-          <div className="space-y-2 mt-2">
-            {invoice.validation.errors.map((err, i) => (
-              <div key={i} className="alert alert-error bg-error/10 border-error/20 text-error text-xs py-1 rounded-lg">
-                <Icon name="AlertCircle" size={14} />
-                <span>{err}</span>
-              </div>
-            ))}
-            {invoice.validation.warnings.map((warn, i) => (
-              <div key={i} className="alert alert-warning bg-warning/10 border-warning/20 text-warning text-xs py-1 rounded-lg">
-                <Icon name="AlertTriangle" size={14} />
-                <span>{warn}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* AI Confidence Notice */}
-        <div className="alert bg-blue-50 border-blue-100 text-blue-800 text-sm py-2 rounded-lg mt-2">
-          <Icon name="Sparkles" size={18} />
-          <span>AI extracted these fields with {confidence}% confidence. Please verify carefully.</span>
-        </div>
-
-        <div className="mt-auto pt-6 flex gap-3">
+      {/* Persistent Action Footer */}
+      <div className="p-6 bg-slate-50/80 border-t border-slate-200 backdrop-blur-md flex flex-col sm:flex-row gap-4">
+        <Button
+          variant="ghost"
+          type="button"
+          className="flex-1 h-12 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-slate-500 hover:bg-slate-200/50 transition-all shadow-sm"
+          onClick={() => router.back()}
+        >
+          {isAuditor ? "Close Review" : "Cancel"}
+        </Button>
+        {!isAuditor && (
           <Button
-            variant="ghost"
-            type="button"
-            className="flex-1 border border-gray-300"
-            onClick={() => router.back()}
+            type="submit"
+            variant="primary"
+            onClick={handleSubmit}
+            className="flex-[2] h-12 rounded-2xl font-black uppercase tracking-[0.15em] text-[10px] shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            loading={isSaving}
+            icon="CheckCircle"
           >
-            {isAuditor ? "Back to Dashboard" : "Cancel"}
+            Confirm & Finalize
           </Button>
-          {!isAuditor && (
-            <Button
-              type="submit"
-              variant="primary"
-              className="flex-1"
-              loading={isSaving}
-              icon="CheckCircle"
-            >
-              Confirm & Process
-            </Button>
-          )}
-        </div>
-      </form>
+        )}
+      </div>
     </Card>
   );
 };
