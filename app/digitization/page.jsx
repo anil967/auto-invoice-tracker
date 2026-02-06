@@ -6,15 +6,37 @@ import InvoiceList from "@/components/Digitization/InvoiceList";
 import Icon from "@/components/Icon";
 import { motion } from "framer-motion";
 
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+
 export default function DigitizationPage() {
+  return (
+    <div className="h-full">
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading digitization queue...</div>}>
+        <DigitizationPageContent />
+      </Suspense>
+    </div>
+  );
+}
+
+function DigitizationPageContent() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get('status');
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const allInvoices = await getAllInvoices();
-        setInvoices(allInvoices);
+        let filteredInvoices = allInvoices;
+
+        if (statusFilter) {
+          filteredInvoices = allInvoices.filter(inv => inv.status === statusFilter);
+        }
+
+        setInvoices(filteredInvoices);
       } catch (e) {
         console.error("Failed to load invoices from backend", e);
       } finally {
@@ -27,14 +49,19 @@ export default function DigitizationPage() {
     const pollInterval = setInterval(async () => {
       try {
         const remoteInvoices = await getAllInvoices();
-        setInvoices(remoteInvoices);
+        let filteredRemote = remoteInvoices;
+
+        if (statusFilter) {
+          filteredRemote = remoteInvoices.filter(inv => inv.status === statusFilter);
+        }
+        setInvoices(filteredRemote);
       } catch (e) {
         console.error("Polling error", e);
       }
     }, 5000);
 
     return () => clearInterval(pollInterval);
-  }, []);
+  }, [statusFilter]);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">

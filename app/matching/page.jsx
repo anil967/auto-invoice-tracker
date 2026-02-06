@@ -6,18 +6,40 @@ import MatchingList from "@/components/Matching/MatchingList";
 import Icon from "@/components/Icon";
 import { motion } from "framer-motion";
 
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+
 export default function MatchingPage() {
+  return (
+    <div className="h-full">
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading matching arena...</div>}>
+        <MatchingPageContent />
+      </Suspense>
+    </div>
+  )
+}
+
+function MatchingPageContent() {
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const searchParams = useSearchParams();
+  const statusFilter = searchParams.get('status');
 
   useEffect(() => {
     const loadData = async () => {
       try {
         const allInvoices = await getAllInvoices();
         // Filter for invoices ready for matching
-        const readyForMatching = allInvoices.filter(inv =>
+        let readyForMatching = allInvoices.filter(inv =>
           ['VERIFIED', 'VALIDATION_REQUIRED', 'MATCH_DISCREPANCY', 'DIGITIZED'].includes(inv.status)
         );
+
+        // Apply status filter from URL if present
+        if (statusFilter) {
+          readyForMatching = readyForMatching.filter(inv => inv.status === statusFilter);
+        }
+
         setInvoices(readyForMatching);
       } catch (error) {
         console.error("Failed to load matching data:", error);
