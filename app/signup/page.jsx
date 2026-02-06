@@ -57,60 +57,60 @@ export default function SignupPage() {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Full Name</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Full Name</label>
                             <div className="relative">
-                                <Icon name="User" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="User" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900 placeholder:text-gray-500"
                                     placeholder="John Doe"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Email</label>
                             <div className="relative">
-                                <Icon name="Mail" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="Mail" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900 placeholder:text-gray-500"
                                     placeholder="name@company.com"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Password</label>
                             <div className="relative">
-                                <Icon name="Lock" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="Lock" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900 placeholder:text-gray-500"
                                     placeholder="Create a strong password"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Role</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Role</label>
                             <select
                                 value={role}
                                 onChange={(e) => setRole(e.target.value)}
-                                className="select w-full bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                className="select w-full bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900"
                             >
-                                <option value={ROLES.FINANCE_USER}>Finance User</option>
-                                <option value={ROLES.FINANCE_MANAGER}>Finance Manager</option>
-                                <option value={ROLES.PROJECT_MANAGER}>Project Manager</option>
-                                <option value={ROLES.ADMIN}>Admin</option>
-                                <option value={ROLES.AUDITOR}>Auditor</option>
-                                <option value={ROLES.VENDOR}>Vendor</option>
+                                <option value={ROLES.FINANCE_USER} className="text-gray-900 bg-white">Finance User</option>
+                                <option value={ROLES.FINANCE_MANAGER} className="text-gray-900 bg-white">Finance Manager</option>
+                                <option value={ROLES.PROJECT_MANAGER} className="text-gray-900 bg-white">Project Manager</option>
+                                <option value={ROLES.ADMIN} className="text-gray-900 bg-white">Admin</option>
+                                <option value={ROLES.AUDITOR} className="text-gray-900 bg-white">Auditor</option>
+                                <option value={ROLES.VENDOR} className="text-gray-900 bg-white">Vendor</option>
                             </select>
                         </div>
 

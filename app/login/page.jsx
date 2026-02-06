@@ -58,48 +58,48 @@ export default function LoginPage() {
                         )}
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Email</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Email</label>
                             <div className="relative">
-                                <Icon name="Mail" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="Mail" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900 placeholder:text-gray-500"
                                     placeholder="name@company.com"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Password</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Password</label>
                             <div className="relative">
-                                <Icon name="Lock" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="Lock" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="input w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900 placeholder:text-gray-500"
                                     placeholder="••••••••"
                                 />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-gray-700 ml-1">Simulate Role</label>
+                            <label className="text-sm font-semibold text-gray-900 ml-1">Simulate Role</label>
                             <div className="relative">
-                                <Icon name="Shield" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                                <Icon name="Shield" size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" />
                                 <select
                                     value={role}
                                     onChange={(e) => setRole(e.target.value)}
-                                    className="select w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                                    className="select w-full pl-11 bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900"
                                 >
                                     {Object.values(ROLES).map((r) => (
-                                        <option key={r} value={r}>{r}</option>
+                                        <option key={r} value={r} className="text-gray-900 bg-white">{r}</option>
                                     ))}
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-400 ml-1">For demo purposes only</p>
+                            <p className="text-xs text-gray-500 ml-1">For demo purposes only</p>
                         </div>
 
                         <button
