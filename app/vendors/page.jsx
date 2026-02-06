@@ -160,22 +160,6 @@ export default function VendorPortal() {
                 </div>
             </main>
 
-            {/* Footer */}
-            <footer className="mt-20 py-12 bg-slate-900 text-slate-400 border-t border-slate-800 px-6">
-                <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8 text-sm">
-                    <div className="flex items-center gap-4">
-                        <span className="font-bold text-white">© 2026 InvoiceFlow Technologies</span>
-                        <span>•</span>
-                        <Link href="#" className="hover:text-white transition-colors">Privacy Policy</Link>
-                        <Link href="#" className="hover:text-white transition-colors">Terms of Service</Link>
-                    </div>
-                    <div className="flex gap-6">
-                        <Link href="/" className="btn btn-sm btn-outline border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white rounded-full px-6">
-                            Back to Main Website
-                        </Link>
-                    </div>
-                </div>
-            </footer>
         </div>
     );
 }
