@@ -12,14 +12,19 @@ import DropZone from "@/components/Dashboard/DropZone";
 import StatCard from "@/components/Dashboard/StatCard";
 import Card from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
+import AdminDashboard from "@/components/Dashboard/Roles/AdminDashboard";
+import FinanceManagerDashboard from "@/components/Dashboard/Roles/FinanceManagerDashboard";
+import FinanceUserDashboard from "@/components/Dashboard/Roles/FinanceUserDashboard";
+import AuditorDashboard from "@/components/Dashboard/Roles/AuditorDashboard";
+import VendorPortal from "@/components/Vendor/VendorPortal";
+import NotificationLog from "@/components/Workflow/NotificationLog";
 import { getCurrentUser, ROLES, getDelegation, clearDelegation, setDelegation } from "@/utils/auth";
+import { formatCurrency } from "@/utils/format";
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, logout, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
-  const [currentUser, setCurrentUser] = useState(null);
-  const dropZoneRef = useRef(null);
   const [stats, setStats] = useState({
     totalAmount: 0,
     pendingCount: 0,
@@ -29,6 +34,7 @@ export default function DashboardPage() {
     discrepancyCount: 0
   });
   const [activeTab, setActiveTab] = useState("overview");
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // Protect route - redirect to login if not authenticated
   useEffect(() => {
@@ -64,21 +70,17 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    setCurrentUser(getCurrentUser());
     fetchData();
-
-    const handleAuthChange = () => {
-      setCurrentUser(getCurrentUser());
-    };
-
-    window.addEventListener('auth-change', handleAuthChange);
-    return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);
 
-  const filteredInvoices = invoices.filter(inv => {
-    if (!currentUser) return false;
+  const [statusFilter, setStatusFilter] = useState("ALL");
 
-    const role = currentUser.role;
+  const filteredInvoices = invoices.filter(inv => {
+    // 0. Status Filter
+    if (statusFilter !== "ALL" && inv.status !== statusFilter) return false;
+
+    if (!user) return false;
+    const role = user.role;
 
     // 1. Full Access Roles
     if ([ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER, ROLES.AUDITOR].includes(role)) {
@@ -94,14 +96,42 @@ export default function DashboardPage() {
     return false;
   });
 
+  const handleExportCSV = () => {
+    if (filteredInvoices.length === 0) {
+      alert("No data to export");
+      return;
+    }
+
+    const headers = ["ID", "Vendor", "Invoice #", "Date", "Amount", "Status", "PO Number"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredInvoices.map(inv => [
+        inv.id,
+        `"${inv.vendorName}"`,
+        inv.invoiceNumber || "",
+        inv.date || "",
+        inv.amount || 0,
+        inv.status,
+        inv.poNumber || ""
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `invoices_export_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleUploadComplete = () => {
     fetchData(); // Refresh data after upload
   };
 
-  // Helper to format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
-  };
+
 
   // Show loading state while checking authentication
   if (authLoading || !user) {
@@ -117,202 +147,245 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 pb-10">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Overview of your financial workflows</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="tabs tabs-boxed bg-white/40 border border-white/60 backdrop-blur-md p-1 rounded-full">
-            <button
-              className={`tab tab-sm h-8 px-4 rounded-full transition-all ${activeTab === 'overview' ? 'tab-active bg-primary text-white shadow-md' : 'text-gray-500 hover:bg-white/50'}`}
-              onClick={() => setActiveTab("overview")}
-            >
-              Overview
-            </button>
-            <button
-              className={`tab tab-sm h-8 px-4 rounded-full transition-all ${activeTab === 'analytics' ? 'tab-active bg-primary text-white shadow-md' : 'text-gray-500 hover:bg-white/50'}`}
-              onClick={() => setActiveTab("analytics")}
-            >
-              Analytics
-            </button>
-          </div>
+      {/* Premium Sticky Header */}
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200/80 shadow-sm -mx-6 px-6 py-4 md:-mx-8 md:px-8 -mt-6 md:-mt-8 mb-6 transition-all">
+        <div className="flex flex-row items-center justify-between gap-3 lg:gap-6 max-w-7xl mx-auto">
 
-          <RoleSwitcher />
-
-          <button
-            onClick={() => window.open('/api/invoices/export')}
-            className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm"
-          >
-            <Icon name="Download" size={16} />
-            <span>Export Audit Trail</span>
-          </button>
-
-          {currentUser?.role === ROLES.PROJECT_MANAGER && (
-            <button
-              onClick={() => {
-                const del = getDelegation();
-                if (del) clearDelegation();
-                else setDelegation(ROLES.FINANCE_MANAGER);
-                alert(del ? "Delegation cleared!" : "Authority delegated to Finance Manager!");
-              }}
-              className={`btn btn-sm shadow-sm ${getDelegation() ? 'btn-error text-white' : 'btn-ghost bg-white/40 border-white/60'}`}
-            >
-              <Icon name={getDelegation() ? "UserX" : "UserPlus"} size={16} />
-              <span>{getDelegation() ? "Clear Delegation" : "Delegate Authority"}</span>
-            </button>
-          )}
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => dropZoneRef.current?.open()}
-              className="btn btn-sm btn-primary text-white shadow-lg shadow-primary/30 rounded-full px-4"
-            >
-              <Icon name="Plus" size={16} />
-              <span>New Invoice</span>
-            </button>
-          </div>
-
-          {/* User Profile Section */}
-          <div className="flex items-center gap-3 pl-4 border-l border-gray-300 ml-2">
-            <div className="text-right leading-tight">
-              <p className="text-sm font-bold text-gray-900">{user?.name || 'User'}</p>
-              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                {user?.role || 'Guest'}
-              </span>
+          {/* Left: Title & Context */}
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-600/20 hidden md:block">
+              <Icon name="LayoutDashboard" className="text-white w-5 h-5" />
             </div>
-            <button
-              onClick={logout}
-              className="btn btn-sm btn-circle btn-ghost text-gray-500 hover:text-error hover:bg-error/10 transition-colors"
-              title="Sign Out"
-            >
-              <Icon name="LogOut" size={20} />
-            </button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight leading-none whitespace-nowrap">
+                Financial <span className="text-indigo-600">Command</span>
+              </h1>
+              <p className="hidden md:block text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
+                Real-time Control
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Controls & Profile */}
+          <div className="flex items-center gap-2 lg:gap-3">
+
+            {/* View Toggles - Hidden on mobile, visible on lg+ */}
+            <div className="hidden xl:flex bg-slate-100/60 p-1 rounded-xl border border-slate-200/60 items-center">
+              <button
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'overview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => setActiveTab("overview")}
+              >
+                <Icon name="BarChart2" size={13} /> Overview
+              </button>
+              <button
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'analytics' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                onClick={() => setActiveTab("analytics")}
+              >
+                <Icon name="PieChart" size={13} /> Analytics
+              </button>
+            </div>
+
+            <div className="h-8 w-px bg-slate-200 hidden xl:block"></div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2">
+              <RoleSwitcher />
+
+              <button
+                onClick={() => setIsUploadModalOpen(true)}
+                className="flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all whitespace-nowrap"
+              >
+                <Icon name="Plus" size={15} /> <span className="hidden lg:inline">New Invoice</span><span className="lg:hidden">New</span>
+              </button>
+
+              <button
+                onClick={handleExportCSV}
+                className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+                title="Export CSV"
+              >
+                <Icon name="Download" size={17} />
+              </button>
+
+              <div className="dropdown dropdown-end">
+                <label tabIndex={0} className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer">
+                  <Icon name="Filter" size={16} />
+                </label>
+                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-2xl w-56 border border-slate-100 mt-2">
+                  <div className="px-4 py-2 border-b border-slate-50 mb-1">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Filter by Status</p>
+                  </div>
+                  <li><a onClick={() => setStatusFilter("ALL")} className="text-xs font-bold text-slate-600 py-2">All Invoices</a></li>
+                  <li><a onClick={() => setStatusFilter("PENDING_APPROVAL")} className="text-xs font-bold text-amber-600 py-2">Pending Approval</a></li>
+                  <li><a onClick={() => setStatusFilter("PAID")} className="text-xs font-bold text-emerald-600 py-2">Paid</a></li>
+                  <li><a onClick={() => setStatusFilter("MATCH_DISCREPANCY")} className="text-xs font-bold text-rose-600 py-2">Discrepancies</a></li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="h-8 w-px bg-slate-200 hidden lg:block"></div>
+
+            {/* User Profile */}
+            <div className="flex items-center gap-2.5 group cursor-pointer relative" title="View Profile">
+              <div className="text-right hidden sm:block leading-tight">
+                <p className="text-xs font-bold text-slate-800">{user?.name || 'User'}</p>
+                <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
+                  {user?.role || 'Guest'}
+                </span>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md flex items-center justify-center text-white ring-2 ring-white group-hover:ring-indigo-100 transition-all">
+                <span className="font-bold text-xs">{user?.name?.charAt(0) || 'U'}</span>
+              </div>
+
+              <button
+                onClick={logout}
+                className="absolute -bottom-1 -right-1 w-4 h-4 bg-white text-slate-400 rounded-full shadow-sm border border-slate-100 flex items-center justify-center hover:text-rose-500 hover:border-rose-100 transition-colors"
+                title="Sign Out"
+              >
+                <Icon name="LogOut" size={8} />
+              </button>
+            </div>
+
           </div>
         </div>
-      </div>
+      </header>
 
-      {activeTab === 'analytics' ? (
-        <AnalyticsView />
+      {user?.role === ROLES.VENDOR ? (
+        <VendorPortal onUploadClick={() => setIsUploadModalOpen(true)} />
+      ) : user?.role === ROLES.ADMIN ? (
+        <AdminDashboard />
+      ) : user?.role === ROLES.FINANCE_MANAGER ? (
+        <FinanceManagerDashboard invoices={invoices} />
+      ) : user?.role === ROLES.FINANCE_USER ? (
+        <FinanceUserDashboard invoices={invoices} onUploadComplete={handleUploadComplete} />
+      ) : user?.role === ROLES.AUDITOR ? (
+        <AuditorDashboard invoices={invoices} />
       ) : (
         <>
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              title="Total Volume"
-              value={formatCurrency(stats.totalAmount)}
-              icon="DollarSign"
-              trend="up"
-              trendValue="12%"
-              color="primary"
-              delay={0}
-            />
-            <StatCard
-              title="Discrepancies"
-              value={stats.discrepancyCount}
-              icon="AlertCircle"
-              color="error"
-              delay={1}
-            />
-            <StatCard
-              title="Verified"
-              value={stats.verifiedCount}
-              icon="CheckCircle"
-              color="success"
-              delay={2}
-            />
-            <StatCard
-              title="Pending Approval"
-              value={stats.pendingCount}
-              icon="Clock"
-              color="warning"
-              delay={3}
-            />
-          </div>
+          {activeTab === 'analytics' ? (
+            <AnalyticsView invoices={invoices} />
+          ) : (
+            <>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                  title="Total Volume"
+                  value={formatCurrency(stats.totalAmount)}
+                  icon="DollarSign"
+                  trend="up"
+                  trendValue="12%"
+                  color="primary"
+                />
+                <StatCard
+                  title="Discrepancies"
+                  value={stats.discrepancyCount}
+                  icon="AlertCircle"
+                  color="error"
+                />
+                <StatCard
+                  title="Verified"
+                  value={stats.verifiedCount}
+                  icon="CheckCircle"
+                  color="success"
+                />
+                <StatCard
+                  title="Pending Approval"
+                  value={stats.pendingCount}
+                  icon="Clock"
+                  color="warning"
+                />
+              </div>
 
-          {/* Main Content Split: DropZone & Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-auto lg:h-[500px]">
-            {/* Left Column: Interactive Drop Zone */}
-            <div className="lg:col-span-2 h-full">
-              <Card className="h-full flex flex-col" hoverEffect={false}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">Quick Upload</h3>
-                    <p className="text-sm text-gray-500">Drag invoices here to start processing</p>
-                  </div>
-                  <button className="btn btn-circle btn-ghost btn-sm">
-                    <Icon name="MoreHorizontal" size={20} />
-                  </button>
-                </div>
-                <div className="flex-1 min-h-[300px]">
-                  <DropZone ref={dropZoneRef} onUploadComplete={handleUploadComplete} />
-                </div>
-              </Card>
-            </div>
-
-            {/* Right Column: Recent Activity Feed */}
-            <div className="lg:col-span-1 h-full">
-              <Card className="h-full flex flex-col" hoverEffect={false}>
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-gray-800">Recent Activity</h3>
-                  <Link href="/reports" className="text-sm text-primary hover:underline">View All</Link>
-                </div>
-
-                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-4">
-                  {filteredInvoices.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                      <Icon name="Inbox" size={48} className="mb-2 opacity-50" />
-                      <p>No invoices matching your role</p>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  <DropZone onUploadComplete={handleUploadComplete} />
+                  <Card p={0} className="overflow-hidden">
+                    <div className="p-4 border-b border-gray-100 flex justify-between items-center">
+                      <h3 className="font-bold">Recent Invoices</h3>
+                      <Link href="/matching" className="text-xs text-primary">View Matching Center</Link>
                     </div>
-                  ) : (
-                    filteredInvoices.slice(0, 6).map((inv, idx) => (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/50 transition-colors border border-transparent hover:border-white/60 cursor-pointer"
-                      >
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'bg-success/10 text-success' :
-                          inv.status === 'PENDING_APPROVAL' ? 'bg-warning/10 text-warning' :
-                            ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'bg-error/10 text-error' :
-                              'bg-info/10 text-info'
-                          }`}>
-                          <Icon name={
-                            ['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'Check' :
-                              inv.status === 'PENDING_APPROVAL' ? 'Clock' :
-                                ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'AlertCircle' :
-                                  'RefreshCw'
-                          } size={18} />
+                    <div className="p-4 space-y-4">
+                      {filteredInvoices.slice(0, 5).map((inv, idx) => (
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center font-bold text-gray-400">
+                            {inv.id.slice(-2)}
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm">{inv.vendorName}</p>
+                            <p className="text-xs text-gray-500">{inv.id} • {inv.status}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-sm">₹{parseFloat(inv.amount).toLocaleString()}</p>
+                          </div>
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-gray-800 text-sm truncate">{inv.vendorName}</h4>
-                          <p className="text-xs text-gray-500 flex items-center gap-1">
-                            {inv.id} • <span className="opacity-75">{inv.date}</span>
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-bold text-gray-700 text-sm">{formatCurrency(inv.amount)}</p>
-                          <span className={`text-[10px] uppercase font-bold ${['APPROVED', 'VERIFIED', 'PAID'].includes(inv.status) ? 'text-success' :
-                            inv.status === 'PENDING_APPROVAL' ? 'text-warning' :
-                              ['MATCH_DISCREPANCY', 'VALIDATION_REQUIRED'].includes(inv.status) ? 'text-error' :
-                                'text-info'
-                            }`}>
-                            {inv.status}
-                          </span>
-                        </div>
-                      </motion.div>
-                    ))
-                  )}
+                      ))}
+                    </div>
+                  </Card>
                 </div>
-              </Card>
-            </div>
-          </div>
+
+                <div className="space-y-6">
+                  <NotificationLog />
+                  <Card className="p-4">
+                    <h3 className="font-bold mb-4">Quick Actions</h3>
+                    <div className="space-y-2">
+                      <button className="btn btn-sm btn-ghost w-full justify-start gap-3">
+                        <Icon name="FileText" size={16} />
+                        <span>Sync SAP POs</span>
+                      </button>
+                      <button className="btn btn-sm btn-ghost w-full justify-start gap-3">
+                        <Icon name="ShieldCheck" size={16} />
+                        <span>Verification Report</span>
+                      </button>
+                      {user?.role === ROLES.PROJECT_MANAGER && (
+                        <button
+                          onClick={() => {
+                            const to = prompt("Delegate PM authority to (e.g. Finance Manager):");
+                            if (to) alert(`Delegated to ${to}`);
+                          }}
+                          className="btn btn-sm btn-outline btn-primary w-full gap-3 mt-4"
+                        >
+                          <Icon name="Users" size={16} />
+                          <span>Delegate Authority</span>
+                        </button>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              </div>
+            </>
+          )}
         </>
       )}
-
-      {/* Quick Actions / Recent Filings Info */}
+      {/* Global Upload Modal */}
+      <dialog id="upload_modal" className={`modal ${isUploadModalOpen ? 'modal-open' : ''}`}>
+        <div className="modal-box max-w-2xl bg-white p-0 overflow-hidden rounded-3xl shadow-2xl border border-gray-100">
+          <div className="p-6 border-b bg-gray-50 flex justify-between items-center">
+            <div>
+              <h3 className="font-black text-xl text-gray-800 uppercase tracking-tight">Submit New Invoices</h3>
+              <p className="text-xs text-gray-500 mt-1 uppercase font-bold tracking-wider text-primary">Secure ERP Ingestion Portal</p>
+            </div>
+            <button
+              onClick={() => setIsUploadModalOpen(false)}
+              className="btn btn-sm btn-circle btn-ghost"
+            >✕</button>
+          </div>
+          <div className="p-10 bg-white">
+            <DropZone onUploadComplete={() => {
+              fetchData();
+              setIsUploadModalOpen(false);
+            }} />
+          </div>
+          <div className="p-4 bg-gray-50 border-t flex justify-end gap-3 px-6">
+            <button
+              onClick={() => setIsUploadModalOpen(false)}
+              className="btn btn-ghost rounded-full px-8 text-xs font-bold uppercase"
+            >Cancel Submission</button>
+            <button className="btn btn-primary rounded-full px-10 shadow-lg shadow-primary/20 text-xs font-bold uppercase">View Guidelines</button>
+          </div>
+        </div>
+        <div className="modal-backdrop backdrop-blur-sm bg-black/40" onClick={() => setIsUploadModalOpen(false)}>
+          <button>close</button>
+        </div>
+      </dialog>
     </div>
   );
 }

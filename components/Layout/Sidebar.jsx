@@ -6,6 +6,8 @@ import Icon from "@/components/Icon";
 import { motion } from "framer-motion";
 import clsx from "clsx";
 import { APP_VERSION } from "@/lib/version";
+import { useAuth } from "@/context/AuthContext";
+import { canSeeMenuItem } from "@/utils/auth";
 
 const menuItems = [
   { name: "Dashboard", icon: "LayoutDashboard", path: "/dashboard" },
@@ -14,10 +16,15 @@ const menuItems = [
   { name: "Approvals", icon: "CheckCircle", path: "/approvals" },
   { name: "Vendors", icon: "Users", path: "/vendors" },
   { name: "Analytics", icon: "BarChart3", path: "/analytics" },
+  { name: "Configuration", icon: "Settings", path: "/config" },
+  { name: "User Management", icon: "Shield", path: "/users" },
 ];
 
 const Sidebar = () => {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  const filteredMenuItems = menuItems.filter(item => canSeeMenuItem(user, item.name));
 
   return (
     <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 z-40 pt-6 pb-6 pl-6">
@@ -35,7 +42,7 @@ const Sidebar = () => {
 
         {/* Navigation */}
         <nav className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = pathname.startsWith(item.path);
 
             return (

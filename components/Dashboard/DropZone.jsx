@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useCallback, forwardRef, useImperativeHandle } from "react";
+import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
 import { ingestInvoice } from "@/lib/api";
 
-const DropZone = forwardRef(({ onUploadComplete }, ref) => {
+const DropZone = ({ onUploadComplete }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
@@ -49,7 +49,7 @@ const DropZone = forwardRef(({ onUploadComplete }, ref) => {
     }
   }, [onUploadComplete]);
 
-  const { getRootProps, getInputProps, isDragActive, isDragReject, open } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
@@ -59,11 +59,6 @@ const DropZone = forwardRef(({ onUploadComplete }, ref) => {
     maxFiles: 5,
     noClick: false // Allow click on container
   });
-
-  // Expose open method to parent
-  useImperativeHandle(ref, () => ({
-    open: () => open()
-  }));
 
   return (
     <div className="w-full h-full min-h-[300px]">
@@ -163,7 +158,7 @@ const DropZone = forwardRef(({ onUploadComplete }, ref) => {
       </div>
     </div>
   );
-});
+};
 
 DropZone.displayName = "DropZone";
 

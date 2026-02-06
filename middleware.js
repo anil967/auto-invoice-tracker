@@ -3,8 +3,13 @@ import { NextResponse } from 'next/server';
 // App version for cache busting
 const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0';
 
-export function middleware(request) {
+export async function middleware(request) {
     const response = NextResponse.next();
+    const sessionCookie = request.cookies.get('session');
+    const { pathname } = request.nextUrl;
+
+    // Define public routes
+    const isPublicRoute = pathname === '/' || pathname === '/login' || pathname === '/signup' || pathname.startsWith('/api/auth') || pathname.startsWith('/api/debug');
 
     // Add app version header for cache busting
     response.headers.set('X-App-Version', APP_VERSION);
@@ -15,7 +20,7 @@ export function middleware(request) {
     response.headers.set('X-XSS-Protection', '1; mode=block');
 
     // CORS headers for API routes
-    if (request.nextUrl.pathname.startsWith('/api/')) {
+    if (pathname.startsWith('/api/')) {
         response.headers.set('Access-Control-Allow-Origin', process.env.NEXT_PUBLIC_APP_URL || '*');
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-role');
@@ -26,10 +31,38 @@ export function middleware(request) {
         }
     }
 
+    // Auth protection & Role Header Injection
+    if (sessionCookie) {
+        try {
+            // Decrypt session to get role
+            const { decrypt } = await import('@/lib/auth');
+            const session = await decrypt(sessionCookie.value);
+            const userRole = session.user.role;
+
+            // Set role header for internal API use
+            response.headers.set('x-user-role', userRole);
+
+            // Redirect to dashboard if logged in and trying to access login/signup
+            if (pathname === '/login' || pathname === '/signup') {
+                return NextResponse.redirect(new URL('/dashboard', request.url));
+            }
+        } catch (e) {
+            console.error("Middleware session decryption failed", e);
+            // If session is invalid, clear it and redirect if not public
+            if (!isPublicRoute && !pathname.includes('.')) {
+                const redirect = NextResponse.redirect(new URL('/login', request.url));
+                redirect.cookies.set('session', '', { expires: new Date(0) });
+                return redirect;
+            }
+        }
+    } else if (!isPublicRoute && !pathname.includes('.')) {
+        return NextResponse.redirect(new URL('/login', request.url));
+    }
+
     // Add cache control for HTML pages - prevent stale UI
-    if (!request.nextUrl.pathname.startsWith('/api/') &&
-        !request.nextUrl.pathname.startsWith('/_next/') &&
-        !request.nextUrl.pathname.startsWith('/uploads/')) {
+    if (!pathname.startsWith('/api/') &&
+        !pathname.startsWith('/_next/') &&
+        !pathname.startsWith('/uploads/')) {
         response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
         response.headers.set('Pragma', 'no-cache');
         response.headers.set('Expires', '0');

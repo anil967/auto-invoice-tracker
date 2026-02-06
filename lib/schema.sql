@@ -1,4 +1,15 @@
 -- lib/schema.sql
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    role TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create invoices table
 CREATE TABLE IF NOT EXISTS invoices (
     id TEXT PRIMARY KEY,

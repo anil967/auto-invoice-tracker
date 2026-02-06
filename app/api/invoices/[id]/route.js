@@ -5,7 +5,7 @@ import { performThreeWayMatch } from '@/lib/services/matching';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     const invoice = await db.getInvoice(id);
 
     if (!invoice) {
@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
 }
 
 export async function PUT(request, { params }) {
-    const { id } = params;
+    const { id } = await params;
     const updates = await request.json();
 
     const invoice = await db.getInvoice(id);
