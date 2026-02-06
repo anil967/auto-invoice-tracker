@@ -24,11 +24,11 @@ export async function middleware(request) {
     // Content Security Policy (CSP)
     const cspHeader = `
         default-src 'self';
-        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://subtle-druid-430b16.netlify.app;
-        style-src 'self' 'unsafe-inline';
-        img-src 'self' data: https:;
-        font-src 'self' data:;
-        connect-src 'self';
+        script-src 'self' 'unsafe-eval' 'unsafe-inline' https://subtle-druid-430b16.netlify.app https://vercel.live https://va.vercel-scripts.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+        img-src 'self' data: https: blob:;
+        font-src 'self' data: https://fonts.gstatic.com;
+        connect-src 'self' https://vercel.live https://va.vercel-scripts.com;
         frame-ancestors 'self';
     `.replace(/\s{2,}/g, ' ').trim();
     response.headers.set('Content-Security-Policy', cspHeader);

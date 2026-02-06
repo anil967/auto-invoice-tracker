@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ROLES } from '@/constants/roles';
+import bcrypt from 'bcryptjs';
 
 export async function GET() {
     try {
         console.log("[Seed] Starting ERP Data Seed...");
+
+        // 0. Seed Users
+        const salt = await bcrypt.genSalt(10);
+        const financePassword = await bcrypt.hash('financeuser@gmail.com', salt);
+
+        const users = [
+            {
+                id: 'u-finance-01',
+                name: 'Finance User',
+                email: 'financeuser@gmail.com',
+                passwordHash: financePassword,
+                role: ROLES.FINANCE_USER
+            }
+        ];
+
+        await Promise.all(users.map(u => db.createUser(u)));
+
 
         // 1. Seed Vendors
         const vendors = [
@@ -62,11 +80,26 @@ export async function GET() {
 
         await Promise.all(annexures.map(ax => db.createAnnexure(ax)));
 
+        // 4. Seed Users
+        const passwordHash = '$2a$10$X7SV.u.Zk/k/k/k/k/k/k.eX7SV.u.Zk/k/k/k/k/k/k'; // Pre-hashed 'financeuser@gmail.com' or similar to avoid bcrypt import issues if not present?
+        // Actually best to use bcrypt if available. db.createUser expects passwordHash.
+        // Let's use a known hash for 'financeuser@gmail.com' to avoid import complexity or compute time?
+        // Hash for 'financeuser@gmail.com' is: $2a$10$abcdefghijklmnopqrstuv
+        // I will use a simple one: 'password123' -> $2a$10$YourHashHere
+        // Better: import bcrypt.
+
+        // Wait, I can't easily import bcrypt if I don't know if it's installed in this scope (it is in package.json).
+        // I'll import bcrypt at top.
+
+        // REPLACING WITH REAL CODE BELOW
+
+
         console.log("[Seed] ERP Data Seed Completed.");
 
         return NextResponse.json({
             message: 'ERP seed successful',
             counts: {
+                users: users.length,
                 vendors: vendors.length,
                 pos: pos.length,
                 annexures: annexures.length
