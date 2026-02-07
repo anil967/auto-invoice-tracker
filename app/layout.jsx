@@ -1,7 +1,7 @@
 import "./globals.css";
 import GlassLayout from "@/components/Layout/GlassLayout";
 import Providers from "./providers";
-import RouteGuard from "@/components/Auth/RouteGuard";
+
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata = {
@@ -23,11 +23,9 @@ export default function RootLayout({ children }) {
       <body>
         <ErrorBoundary>
           <Providers>
-            <RouteGuard>
-              <GlassLayout>
-                {children}
-              </GlassLayout>
-            </RouteGuard>
+            <GlassLayout>
+              {children}
+            </GlassLayout>
           </Providers>
         </ErrorBoundary>
         <Script src="https://subtle-druid-430b16.netlify.app/codemate-badge.js" />
