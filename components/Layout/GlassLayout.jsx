@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Background3D from "@/components/Layout/Background3D";
+import Navbar from "@/components/Layout/Navbar";
 import Sidebar from "@/components/Layout/Sidebar";
 
 const GlassLayout = ({ children }) => {
