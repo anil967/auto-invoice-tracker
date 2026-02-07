@@ -1,233 +1,173 @@
 /**
- * Integration Tests for API Endpoints
- * Tests RBAC enforcement across API routes
+ * Integration Tests for API Endpoints (Handler Logic)
+ * Tests RBAC enforcement by calling route handlers directly with mocks
  */
 
-import { describe, test, expect, beforeAll, afterAll } from '@jest/globals';
+import { describe, test, expect, jest, beforeEach } from '@jest/globals';
+import { NextRequest } from 'next/server';
 
-const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3000';
+// 1. Mock Authentication
+jest.mock('@/lib/auth', () => ({
+    getSession: jest.fn()
+}));
 
-// Mock session tokens for different roles
-const mockSessions = {
-    admin: { userId: 'admin-1', role: 'Admin' },
-    pm: { userId: 'pm-1', role: 'PM' },
-    finance: { userId: 'finance-1', role: 'Finance User' },
-    vendor: { userId: 'vendor-1', role: 'Vendor' }
+// 2. Mock Database & Models
+jest.mock('@/lib/mongodb', () => jest.fn());
+jest.mock('@/lib/db', () => ({
+    db: {
+        getVendor: jest.fn().mockResolvedValue({ id: 'v1', name: 'Test Vendor' }),
+        createAuditTrailEntry: jest.fn().mockResolvedValue(true)
+    }
+}));
+
+// Helper to create a chainable model mock
+const mockMongooseModel = () => {
+    const chain = {
+        sort: jest.fn().mockReturnThis(),
+        select: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        populate: jest.fn().mockReturnThis(),
+        exec: jest.fn().mockResolvedValue([]), // End of chain
+        then: (cb) => Promise.resolve([]).then(cb) // Allow await directly on chain
+    };
+
+    // Bind the chain to methods that start it
+    const startChain = jest.fn(() => chain);
+
+    return {
+        find: startChain,
+        findById: jest.fn().mockResolvedValue(null),
+        findOne: jest.fn().mockResolvedValue(null),
+        create: jest.fn().mockImplementation(data => Promise.resolve({
+            ...data,
+            toObject: () => data
+        })),
+        countDocuments: jest.fn().mockResolvedValue(0),
+        updateMany: jest.fn().mockResolvedValue({ modifiedCount: 1 }),
+        ...chain // Include chain methods directly for clarity if needed
+    };
 };
 
-describe('API - Admin Routes Access Control', () => {
-    test('GET /api/admin/users - Admin should access', async () => {
-        // This is a mock test structure - actual implementation would use
-        // proper session mocking or test auth tokens
-        const response = await fetch(`${BASE_URL}/api/admin/users`, {
-            headers: {
-                'X-Test-Role': 'Admin',
-                'X-Test-User-Id': 'admin-1'
-            }
-        }).catch(() => ({ status: 401 }));
+jest.mock('@/models/User', () => mockMongooseModel());
+jest.mock('@/models/Invoice', () => mockMongooseModel());
+jest.mock('@/models/RateCard', () => mockMongooseModel());
+jest.mock('@/models/Project', () => mockMongooseModel());
+jest.mock('@/models/Vendor', () => mockMongooseModel());
+jest.mock('@/models/Message', () => mockMongooseModel());
 
-        // In real tests, should be 200 for admin
-        expect([200, 401]).toContain(response.status);
-    });
+// 3. Import Handlers (AFTER mocks)
+import { GET as getAdminUsers } from '@/app/api/admin/users/route';
+import { POST as createRateCard } from '@/app/api/admin/ratecards/route';
+import { GET as getVendorInvoices } from '@/app/api/vendor/invoices/route';
+import { POST as submitVendorInvoice } from '@/app/api/vendor/submit/route';
+import { GET as getPMMessages, POST as sendPMMessage } from '@/app/api/pm/messages/route';
+import { getSession } from '@/lib/auth';
 
-    test('GET /api/admin/users - Vendor should NOT access', async () => {
-        const response = await fetch(`${BASE_URL}/api/admin/users`, {
-            headers: {
-                'X-Test-Role': 'Vendor',
-                'X-Test-User-Id': 'vendor-1'
-            }
-        }).catch(() => ({ status: 403 }));
+const BASE_URL = 'http://localhost:3000';
 
-        // Should be 401 or 403
-        expect([401, 403]).toContain(response.status);
-    });
-
-    test('POST /api/admin/ratecards - Only Admin can create', async () => {
-        const response = await fetch(`${BASE_URL}/api/admin/ratecards`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Role': 'PM'
-            },
-            body: JSON.stringify({ name: 'Test Rate Card' })
-        }).catch(() => ({ status: 403 }));
-
-        expect([401, 403]).toContain(response.status);
-    });
-});
-
-describe('API - Finance Routes Access Control', () => {
-    test('GET /api/finance/hil-review - Finance User should access', async () => {
-        const response = await fetch(`${BASE_URL}/api/finance/hil-review`, {
-            headers: {
-                'X-Test-Role': 'Finance User',
-                'X-Test-User-Id': 'finance-1'
-            }
-        }).catch(() => ({ status: 401 }));
-
-        expect([200, 401]).toContain(response.status);
-    });
-
-    test('POST /api/finance/approve/:id - Vendor should NOT access', async () => {
-        const response = await fetch(`${BASE_URL}/api/finance/approve/test-id`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Role': 'Vendor'
-            },
-            body: JSON.stringify({ action: 'APPROVE' })
-        }).catch(() => ({ status: 403 }));
-
-        expect([401, 403]).toContain(response.status);
-    });
-});
-
-describe('API - PM Routes Access Control', () => {
-    test('GET /api/pm/projects - PM should access', async () => {
-        const response = await fetch(`${BASE_URL}/api/pm/projects`, {
-            headers: {
-                'X-Test-Role': 'PM',
-                'X-Test-User-Id': 'pm-1'
-            }
-        }).catch(() => ({ status: 401 }));
-
-        expect([200, 401]).toContain(response.status);
-    });
-
-    test('POST /api/pm/documents - PM should upload', async () => {
-        const formData = new FormData();
-        formData.append('type', 'RINGI');
-
-        const response = await fetch(`${BASE_URL}/api/pm/documents`, {
-            method: 'POST',
-            headers: {
-                'X-Test-Role': 'PM'
-            },
-            body: formData
-        }).catch(() => ({ status: 401 }));
-
-        // Without file, should be 400 or auth error
-        expect([400, 401]).toContain(response.status);
-    });
-
-    test('POST /api/pm/approve/:id - Finance User should NOT access', async () => {
-        const response = await fetch(`${BASE_URL}/api/pm/approve/test-id`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Role': 'Finance User'
-            },
-            body: JSON.stringify({ action: 'APPROVE' })
-        }).catch(() => ({ status: 403 }));
-
-        expect([401, 403]).toContain(response.status);
-    });
-});
-
-describe('API - Vendor Routes Access Control', () => {
-    test('GET /api/vendor/invoices - Vendor should access own invoices', async () => {
-        const response = await fetch(`${BASE_URL}/api/vendor/invoices`, {
-            headers: {
-                'X-Test-Role': 'Vendor',
-                'X-Test-User-Id': 'vendor-1'
-            }
-        }).catch(() => ({ status: 401 }));
-
-        expect([200, 401]).toContain(response.status);
-    });
-
-    test('POST /api/vendor/submit - Vendor should submit invoices', async () => {
-        const formData = new FormData();
-        formData.append('invoiceNumber', 'TEST-001');
-
-        const response = await fetch(`${BASE_URL}/api/vendor/submit`, {
-            method: 'POST',
-            headers: {
-                'X-Test-Role': 'Vendor'
-            },
-            body: formData
-        }).catch(() => ({ status: 401 }));
-
-        // Without file should be 400 or auth error
-        expect([400, 401]).toContain(response.status);
-    });
-
-    test('POST /api/vendor/submit - PM should NOT access vendor submission', async () => {
-        const response = await fetch(`${BASE_URL}/api/vendor/submit`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Test-Role': 'PM'
-            }
-        }).catch(() => ({ status: 403 }));
-
-        expect([401, 403]).toContain(response.status);
-    });
-});
-
-describe('API - Messaging Routes', () => {
-    test('GET /api/pm/messages - PM and Vendor should access', async () => {
-        for (const role of ['PM', 'Vendor']) {
-            const response = await fetch(`${BASE_URL}/api/pm/messages`, {
-                headers: {
-                    'X-Test-Role': role,
-                    'X-Test-User-Id': `${role.toLowerCase()}-1`
-                }
-            }).catch(() => ({ status: 401 }));
-
-            expect([200, 401]).toContain(response.status);
+// Test Data
+const mockSession = (role, userId = 'test-user') => {
+    getSession.mockResolvedValue({
+        user: {
+            id: userId,
+            role: role,
+            email: 'test@example.com',
+            isActive: true,
+            permissions: []
         }
     });
+};
 
-    test('POST /api/pm/messages - Should require authentication', async () => {
-        const response = await fetch(`${BASE_URL}/api/pm/messages`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                recipientId: 'user-1',
-                content: 'Test message'
-            })
-        }).catch(() => ({ status: 401 }));
-
-        expect([401]).toContain(response.status);
+describe('RBAC Integration: Handler Logic', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
-});
 
-describe('API - Data Filtering by Role', () => {
-    test('Vendors should only see their own invoices', async () => {
-        // This test verifies the API filters data by submittedByUserId for vendors
-        const response = await fetch(`${BASE_URL}/api/vendor/invoices`, {
-            headers: {
-                'X-Test-Role': 'Vendor',
-                'X-Test-User-Id': 'vendor-specific-id'
-            }
-        }).catch(() => null);
+    describe('Admin API: Users', () => {
+        test('Admin access granted', async () => {
+            mockSession('Admin');
+            const req = new NextRequest(`${BASE_URL}/api/admin/users`);
+            const res = await getAdminUsers(req);
+            expect(res.status).toBe(200);
+        });
 
-        if (response && response.ok) {
-            const data = await response.json();
-            // All returned invoices should belong to the vendor
-            data.invoices?.forEach(invoice => {
-                expect(invoice.submittedByUserId).toBe('vendor-specific-id');
+        test('Vendor access denied', async () => {
+            mockSession('Vendor');
+            const req = new NextRequest(`${BASE_URL}/api/admin/users`);
+            const res = await getAdminUsers(req);
+            expect(res.status).toBe(403);
+            const data = await res.json();
+            expect(data.error).toMatch(/authorized/i);
+        });
+    });
+
+    describe('Admin API: Rate Cards', () => {
+        test('Admin can create rate card', async () => {
+            mockSession('Admin');
+            const req = new NextRequest(`${BASE_URL}/api/admin/ratecards`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    vendorId: 'v1',
+                    name: 'Test Rates',
+                    rates: [{ description: 'Dev', unit: 'Hour', rate: 100 }],
+                    effectiveFrom: '2023-01-01'
+                })
             });
-        }
+            const res = await createRateCard(req);
+            expect(res.status).toBe(201);
+        });
+
+        test('PM cannot create rate card', async () => {
+            mockSession('PM');
+            const req = new NextRequest(`${BASE_URL}/api/admin/ratecards`, {
+                method: 'POST',
+                body: JSON.stringify({ name: 'Test' })
+            });
+            const res = await createRateCard(req);
+            expect(res.status).toBe(403);
+        });
     });
 
-    test('PMs should only see assigned project invoices', async () => {
-        const response = await fetch(`${BASE_URL}/api/pm/projects`, {
-            headers: {
-                'X-Test-Role': 'PM',
-                'X-Test-User-Id': 'pm-specific-id'
-            }
-        }).catch(() => null);
+    describe('Vendor API: Invoices', () => {
+        test('Vendor can view own invoices', async () => {
+            mockSession('Vendor', 'v1');
+            const req = new NextRequest(`${BASE_URL}/api/vendor/invoices`);
+            const res = await getVendorInvoices(req);
+            expect(res.status).toBe(200);
+        });
 
-        if (response && response.ok) {
-            const data = await response.json();
-            // All projects should have PM in assignedPMs
-            data.projects?.forEach(project => {
-                expect(project.assignedPMs).toContain('pm-specific-id');
+        test('Unauthenticated access denied', async () => {
+            getSession.mockResolvedValue(null);
+            const req = new NextRequest(`${BASE_URL}/api/vendor/invoices`);
+            const res = await getVendorInvoices(req);
+            expect(res.status).toBe(401);
+        });
+    });
+
+    describe('PM API: Messages', () => {
+        test('PM can send message', async () => {
+            mockSession('PM');
+            const req = new NextRequest(`${BASE_URL}/api/pm/messages`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    recipientId: 'vendor-1',
+                    content: 'Hello',
+                    messageType: 'GENERAL'
+                })
             });
-        }
+            const res = await sendPMMessage(req);
+            expect(res.status).toBe(201);
+        });
+
+        test('Finance User cannot send message', async () => {
+            mockSession('Finance User');
+            const req = new NextRequest(`${BASE_URL}/api/pm/messages`, {
+                method: 'POST',
+                body: JSON.stringify({ content: 'Hello' })
+            });
+            const res = await sendPMMessage(req);
+            expect(res.status).toBe(403);
+        });
     });
 });
