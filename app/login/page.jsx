@@ -12,6 +12,8 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
+    const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test((value || "").trim());
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
@@ -19,11 +21,15 @@ export default function LoginPage() {
             setError("Please fill in all fields");
             return;
         }
+        if (!isValidEmail(email)) {
+            setError("Please enter a valid email address");
+            return;
+        }
 
         try {
-            await login(email, password);
+            await login(email.trim(), password);
         } catch (err) {
-            setError(err.message || "Invalid email or password");
+            setError(err.message || "Login failed. Please try again.");
         }
     };
 

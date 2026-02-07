@@ -298,7 +298,7 @@ export default function DashboardPage() {
       {user?.role === ROLES.VENDOR ? (
         <VendorPortal onUploadClick={() => setIsUploadModalOpen(true)} />
       ) : user?.role === ROLES.ADMIN ? (
-        <AdminDashboard />
+        <AdminDashboard invoices={invoices} onRefresh={fetchData} />
       ) : user?.role === ROLES.FINANCE_USER ? (
         <FinanceUserDashboard invoices={invoices} onUploadComplete={handleUploadComplete} />
       ) : user?.role === ROLES.PROJECT_MANAGER ? (

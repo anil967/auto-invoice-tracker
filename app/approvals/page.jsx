@@ -25,13 +25,24 @@ export default function ApprovalsPage() {
     }
   }, [user, authLoading, router]);
 
+  // Invoices needing managerial review (vendor submissions + pending approval)
+  const APPROVAL_WORKFLOW_STATUSES = [
+    "RECEIVED",
+    "DIGITIZING",
+    "VALIDATION_REQUIRED",
+    "VERIFIED",
+    "MATCH_DISCREPANCY",
+    "PENDING_APPROVAL",
+  ];
+
   useEffect(() => {
     const loadData = async () => {
       try {
         const allInvoices = await getAllInvoices();
-        // Filter for Pending Approval status
-        const pending = allInvoices.filter((inv) => inv.status === "PENDING_APPROVAL");
-        setInvoices(pending);
+        const forReview = allInvoices.filter((inv) =>
+          APPROVAL_WORKFLOW_STATUSES.includes(inv.status)
+        );
+        setInvoices(forReview);
       } catch (error) {
         console.error("Failed to load approvals", error);
       } finally {
@@ -54,10 +65,10 @@ export default function ApprovalsPage() {
             <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600">
               <Icon name="Stamp" size={28} />
             </div>
-            Approval Workflow
+            Admin Approval Workflow
           </h1>
           <p className="text-gray-500 mt-2 ml-14 max-w-xl">
-            Pending invoices requiring managerial review and final sign-off.
+            Pending invoices requiring managerial review and final sign-off. Vendor submissions appear here for review.
           </p>
         </motion.div>
 
@@ -82,7 +93,7 @@ export default function ApprovalsPage() {
           <div className="flex flex-col items-center justify-center h-96 text-gray-400 bg-white/20 rounded-2xl border border-white/40 backdrop-blur-md">
             <Icon name="CheckCircle" size={48} className="mb-4 opacity-50 text-success" />
             <p className="text-lg font-medium text-gray-600">All caught up!</p>
-            <p className="text-sm">No invoices pending approval.</p>
+            <p className="text-sm">No vendor submissions or invoices pending approval.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -94,23 +105,24 @@ export default function ApprovalsPage() {
                 transition={{ delay: index * 0.1 }}
                 className="group relative flex flex-col p-6 rounded-2xl bg-white/40 border border-white/50 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
-                {/* Header */}
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
+                {/* Header: title/ID left, status badge right - no overlap */}
+                <div className="flex justify-between items-start gap-3 mb-4 min-h-[3.5rem]">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-12 h-12 shrink-0 rounded-full bg-amber-500/10 text-amber-600 flex items-center justify-center border border-amber-500/20">
                       <Icon name="FileClock" size={24} />
                     </div>
-                    <div>
-                      <h3 className="font-bold text-gray-800 line-clamp-1">
-                        {invoice.vendorName}
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-gray-800 truncate text-sm" title={invoice.originalName || invoice.vendorName}>
+                        {invoice.originalName || invoice.vendorName}
                       </h3>
-                      <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200">
+                      <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 inline-block mt-1 truncate max-w-full">
                         {invoice.id}
                       </span>
+                      <p className="text-xs text-gray-500 mt-1 truncate">{invoice.vendorName}</p>
                     </div>
                   </div>
-                  <div className="badge badge-warning bg-amber-500/10 text-amber-700 border-none font-semibold">
-                    Pending
+                  <div className="shrink-0 badge badge-warning bg-amber-500/10 text-amber-700 border-none font-semibold text-[10px] uppercase tracking-wide whitespace-nowrap">
+                    {invoice.status?.replace(/_/g, " ") || "Pending"}
                   </div>
                 </div>
 
@@ -119,19 +131,20 @@ export default function ApprovalsPage() {
                   <div className="flex justify-between items-center text-sm border-b border-gray-200/50 pb-2">
                     <span className="text-gray-500">Amount</span>
                     <span className="font-bold text-gray-800 text-lg">
-                      {new Intl.NumberFormat("en-IN", {
-                        style: "currency",
-                        currency: "INR",
-                      }).format(invoice.amount)}
+                      {invoice.amount != null
+                        ? new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR" }).format(invoice.amount)
+                        : "—"}
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Due Date</span>
-                    <span className="text-error font-medium">{invoice.dueDate}</span>
+                    <span className="text-gray-500">Submitted</span>
+                    <span className="text-gray-700">
+                      {invoice.receivedAt ? new Date(invoice.receivedAt).toLocaleDateString() : invoice.dueDate || "—"}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center text-sm">
                     <span className="text-gray-500">Category</span>
-                    <span className="text-gray-700">{invoice.category}</span>
+                    <span className="text-gray-700">{invoice.category || "—"}</span>
                   </div>
                 </div>
 
@@ -143,8 +156,8 @@ export default function ApprovalsPage() {
                   </button>
                 </Link>
 
-                {/* Decorative Corner */}
-                <div className="absolute top-0 right-0 w-20 h-20 bg-linear-to-br from-white/20 to-transparent rounded-tr-2xl pointer-events-none"></div>
+                {/* Decorative corner - behind content so no overlap */}
+                <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-white/20 to-transparent rounded-tr-2xl pointer-events-none -z-10" aria-hidden></div>
               </motion.div>
             ))}
           </div>

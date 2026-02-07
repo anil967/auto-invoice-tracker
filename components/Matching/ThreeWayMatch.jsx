@@ -99,8 +99,8 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   return (
     <div className="max-w-[1280px] mx-auto space-y-6 pb-12 animate-in fade-in duration-700">
       {/* 1. Premium Action Header */}
-      <div className="flex items-center justify-between bg-white/60 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-        <div className="flex items-center gap-5">
+      <div className="flex flex-wrap items-center justify-between gap-4 bg-white/60 backdrop-blur-2xl p-6 rounded-[2rem] border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+        <div className="flex items-center gap-5 min-w-0 flex-1">
           <div className="p-3 bg-primary/10 rounded-2xl ring-1 ring-primary/20">
             <Icon name="ShieldCheck" className="text-primary" size={24} />
           </div>
@@ -126,7 +126,7 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 shrink-0">
           <Button
             variant="ghost"
             disabled={matchStatus === "analyzing" || processing}
@@ -147,8 +147,9 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
         </div>
       </div>
 
-      {/* 2. Enhanced Data Context Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 bg-white p-7 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group">
+      {/* 2. Enhanced Data Context Bar - scroll on narrow so nothing is cut off */}
+      <div className="overflow-x-auto min-w-0">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 bg-white p-5 md:p-7 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden group min-w-0">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[60px] rounded-full -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors"></div>
 
         <div className="space-y-1.5 border-r border-slate-100 last:border-none pr-6">
@@ -176,13 +177,14 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
             </span>
           </div>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 min-w-0">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-            <Icon name="Hash" size={12} className="text-slate-300" /> PO Channel
+            <Icon name="Hash" size={12} className="text-slate-300 shrink-0" /> PO Channel
           </p>
-          <p className="text-lg font-bold text-purple-600 font-mono transition-transform hover:scale-105 origin-left w-fit cursor-default">
+          <p className="text-lg font-bold text-purple-600 font-mono truncate">
             {invoice.poNumber || "NOT_PROVIDED"}
           </p>
+        </div>
         </div>
       </div>
 

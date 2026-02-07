@@ -3,6 +3,14 @@ import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
 import { login } from '@/lib/auth';
 
+// Basic email format validation
+const isValidEmailFormat = (email) => {
+    if (!email || typeof email !== 'string') return false;
+    const trimmed = email.trim();
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(trimmed);
+};
+
 export async function POST(request) {
     try {
         const { email, password } = await request.json();
@@ -14,11 +22,19 @@ export async function POST(request) {
             );
         }
 
+        const trimmedEmail = (email || '').trim().toLowerCase();
+        if (!isValidEmailFormat(trimmedEmail)) {
+            return NextResponse.json(
+                { error: 'Please enter a valid email address' },
+                { status: 400 }
+            );
+        }
+
         // Find user
-        const user = await db.getUserByEmail(email);
+        const user = await db.getUserByEmail(trimmedEmail);
         if (!user) {
             return NextResponse.json(
-                { error: 'Invalid email or password' },
+                { error: 'No account found with this email address' },
                 { status: 401 }
             );
         }
@@ -27,7 +43,7 @@ export async function POST(request) {
         const isValid = await bcrypt.compare(password, user.password_hash);
         if (!isValid) {
             return NextResponse.json(
-                { error: 'Invalid email or password' },
+                { error: 'Incorrect password. Please try again.' },
                 { status: 401 }
             );
         }

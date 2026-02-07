@@ -68,8 +68,7 @@ export default function ApprovalDetailPage() {
 
   if (!invoice) return null;
 
-  // Check if invoice is already processed to disable actions
-  const isProcessed = invoice.status === "APPROVED" || invoice.status === "REJECTED";
+  const isProcessed = ["APPROVED", "REJECTED", "PAID"].includes(invoice.status);
 
   return (
     <div className="flex flex-col h-full max-w-7xl mx-auto space-y-4 pb-10">
@@ -93,7 +92,7 @@ export default function ApprovalDetailPage() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="lg:col-span-2 space-y-4"
+          className="lg:col-span-2 space-y-4 min-w-0"
         >
           {/* Info Banner */}
           <div className="alert bg-blue-50 border-blue-200 text-blue-800 shadow-sm">
@@ -106,18 +105,15 @@ export default function ApprovalDetailPage() {
             </div>
           </div>
 
-          {/* 
-            Wrapper to make ThreeWayMatch read-only visually and interactively.
-            pointer-events-none disables buttons.
-            select-none prevents text selection (optional).
-          */}
-          <div className="relative rounded-2xl overflow-hidden border border-gray-200/50">
-            <div className="pointer-events-none opacity-90 grayscale-[0.05] bg-gray-50/50 p-4">
-              <ThreeWayMatch invoice={invoice} />
+          {/* Wrapper: scrollable content, Read Only badge with clear spacing */}
+          <div className="relative rounded-2xl overflow-hidden border border-gray-200/50 bg-gray-50/50">
+            <div className="overflow-x-auto min-w-0">
+              <div className="pointer-events-none opacity-90 grayscale-[0.05] p-4 min-w-[640px]">
+                <ThreeWayMatch invoice={invoice} />
+              </div>
             </div>
-            {/* Overlay to further ensure read-only feel and maybe add a label */}
-            <div className="absolute top-4 right-4 z-20 pointer-events-none">
-              <span className="badge badge-ghost bg-white/80 backdrop-blur text-xs font-mono uppercase tracking-widest border-gray-300">
+            <div className="absolute top-3 right-3 z-20 pointer-events-none flex items-center gap-2">
+              <span className="badge badge-ghost bg-white/90 backdrop-blur text-[10px] font-mono uppercase tracking-widest border border-gray-200 shadow-sm py-1.5 px-2">
                 Read Only View
               </span>
             </div>
@@ -129,29 +125,29 @@ export default function ApprovalDetailPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="lg:col-span-1 space-y-6"
+          className="lg:col-span-1 space-y-6 min-w-0 shrink-0"
         >
           {/* Approval Actions */}
           {!isProcessed ? (
             <ApprovalActions invoiceId={invoice.id} />
           ) : (
             <div
-              className={`p-6 rounded-2xl border ${invoice.status === "APPROVED"
+              className={`p-6 rounded-2xl border ${invoice.status === "APPROVED" || invoice.status === "PAID"
                 ? "bg-success/10 border-success/30 text-success-content"
                 : "bg-error/10 border-error/30 text-error-content"
                 } flex flex-col items-center justify-center text-center space-y-3`}
             >
               <div
-                className={`w-16 h-16 rounded-full flex items-center justify-center ${invoice.status === "APPROVED" ? "bg-success text-white" : "bg-error text-white"
+                className={`w-16 h-16 rounded-full flex items-center justify-center ${invoice.status === "APPROVED" || invoice.status === "PAID" ? "bg-success text-white" : "bg-error text-white"
                   }`}
               >
                 <Icon
-                  name={invoice.status === "APPROVED" ? "Check" : "X"}
+                  name={invoice.status === "APPROVED" || invoice.status === "PAID" ? "Check" : "X"}
                   size={32}
                 />
               </div>
               <h3 className="text-xl font-bold uppercase">
-                Invoice {invoice.status}
+                Invoice {invoice.status === "PAID" ? "Paid" : invoice.status}
               </h3>
               <p className="text-sm opacity-80">
                 This workflow has been finalized. No further actions can be taken.

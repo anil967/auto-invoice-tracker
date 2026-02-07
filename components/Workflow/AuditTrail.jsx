@@ -5,18 +5,31 @@ import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import clsx from "clsx";
 
+const safeDate = (value) => {
+  const d = value ? new Date(value) : new Date();
+  return Number.isNaN(d.getTime()) ? new Date() : d;
+};
+const formatDate = (d) => {
+  const date = safeDate(d);
+  try {
+    return date.toISOString().split("T")[0];
+  } catch {
+    return "—";
+  }
+};
+
 const AuditTrail = ({ invoice }) => {
-  // Simulate timeline data based on invoice details
   const timeline = useMemo(() => {
     if (!invoice) return [];
 
-    const baseDate = new Date(invoice.date);
+    const baseDate = safeDate(invoice.date || invoice.receivedAt || invoice.created_at);
+    const baseTime = baseDate.getTime();
     const steps = [
       {
         id: "step-1",
         title: "Invoice Received",
         description: "Document uploaded via portal",
-        date: new Date(baseDate.getTime() - 172800000).toISOString().split("T")[0], // 2 days prior
+        date: formatDate(new Date(baseTime - 172800000)),
         status: "completed",
         icon: "FileInput",
         color: "text-blue-500",
@@ -27,7 +40,7 @@ const AuditTrail = ({ invoice }) => {
         id: "step-2",
         title: "Digitization Complete",
         description: "OCR extraction and validation",
-        date: new Date(baseDate.getTime() - 86400000).toISOString().split("T")[0], // 1 day prior
+        date: formatDate(new Date(baseTime - 86400000)),
         status: "completed",
         icon: "ScanLine",
         color: "text-purple-500",
@@ -38,7 +51,7 @@ const AuditTrail = ({ invoice }) => {
         id: "step-3",
         title: "Three-Way Match",
         description: "Automated verification against PO & GR",
-        date: invoice.date,
+        date: invoice.date || formatDate(invoice.receivedAt) || "—",
         status: "completed",
         icon: "GitMerge",
         color: "text-orange-500",
@@ -49,8 +62,8 @@ const AuditTrail = ({ invoice }) => {
         id: "step-4",
         title: "Pending Approval",
         description: "Awaiting manager sign-off",
-        date: invoice.status === "Pending Approval" ? "Today" : invoice.date,
-        status: invoice.status === "Pending Approval" ? "current" : "completed",
+        date: invoice.status === "PENDING_APPROVAL" ? "Today" : (invoice.date || formatDate(invoice.receivedAt) || "—"),
+        status: invoice.status === "PENDING_APPROVAL" ? "current" : "completed",
         icon: "Clock",
         color: "text-warning",
         bgColor: "bg-warning/10",
@@ -58,19 +71,20 @@ const AuditTrail = ({ invoice }) => {
       },
     ];
 
-    // If invoice is already finalized, update step 4 and add step 5
-    if (invoice.status === "Approved" || invoice.status === "Rejected") {
+    const finalStatuses = ["APPROVED", "REJECTED", "PAID"];
+    if (finalStatuses.includes(invoice.status)) {
       steps[3].status = "completed";
+      const isApproved = invoice.status === "APPROVED" || invoice.status === "PAID";
       steps.push({
         id: "step-5",
-        title: invoice.status === "Approved" ? "Approved" : "Rejected",
-        description: invoice.status === "Approved" ? "Payment scheduled" : "Returned to vendor",
+        title: isApproved ? (invoice.status === "PAID" ? "Paid" : "Approved") : "Rejected",
+        description: isApproved ? "Payment scheduled" : "Returned to vendor",
         date: "Today",
-        status: "completed", // Final state
-        icon: invoice.status === "Approved" ? "CheckCircle" : "XCircle",
-        color: invoice.status === "Approved" ? "text-success" : "text-error",
-        bgColor: invoice.status === "Approved" ? "bg-success/10" : "bg-error/10",
-        borderColor: invoice.status === "Approved" ? "border-success" : "border-error",
+        status: "completed",
+        icon: isApproved ? "CheckCircle" : "XCircle",
+        color: isApproved ? "text-success" : "text-error",
+        bgColor: isApproved ? "bg-success/10" : "bg-error/10",
+        borderColor: isApproved ? "border-success" : "border-error",
       });
     }
 

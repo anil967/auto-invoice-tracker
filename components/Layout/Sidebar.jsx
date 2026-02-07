@@ -1,13 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Icon from "@/components/Icon";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import clsx from "clsx";
 import { APP_VERSION } from "@/lib/version";
 import { useAuth } from "@/context/AuthContext";
 import { canSeeMenuItem } from "@/constants/roles";
+
+const SIDEBAR_COLLAPSED_KEY = "invoiceflow-sidebar-collapsed";
 
 const menuItems = [
   { name: "Dashboard", icon: "LayoutDashboard", path: "/dashboard" },
@@ -24,33 +27,76 @@ const menuItems = [
 const Sidebar = () => {
   const pathname = usePathname();
   const { user } = useAuth();
+  const [collapsed, setCollapsed] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+      if (stored !== null) setCollapsed(JSON.parse(stored));
+    } catch (_) {}
+  }, []);
+
+  const toggleSidebar = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, JSON.stringify(next));
+      } catch (_) {}
+      return next;
+    });
+  };
 
   const filteredMenuItems = menuItems.filter(item => canSeeMenuItem(user, item.name));
 
   return (
-    <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 z-40 pt-6 pb-6 pl-6">
-      <div className="glass-panel h-full rounded-3xl flex flex-col justify-between overflow-hidden p-4 relative">
+    <aside
+      className={clsx(
+        "hidden lg:flex flex-col h-screen sticky top-0 z-40 pt-6 pb-6 pl-6 transition-[width] duration-300 ease-in-out",
+        collapsed ? "w-[5rem]" : "w-72"
+      )}
+    >
+      <div className="glass-panel h-full rounded-3xl flex flex-col justify-between overflow-hidden p-3 relative border border-white/20 shadow-xl">
 
-        {/* Brand */}
-        <div className="flex items-center gap-3 px-4 py-4 mb-6">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-            <Icon name="Zap" className="text-white" size={24} />
-          </div>
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
-            InvoiceFlow
-          </span>
+        {/* Brand + Toggle */}
+        <div className={clsx("mb-4", collapsed ? "flex flex-col items-center gap-2" : "flex items-center justify-between gap-2 px-2")}>
+          <Link href="/dashboard" className={clsx("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
+            <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
+              <Icon name="Zap" className="text-white" size={24} />
+            </div>
+            <AnimatePresence initial={false}>
+              {!collapsed && (
+                <motion.span
+                  initial={{ opacity: 0, width: 0 }}
+                  animate={{ opacity: 1, width: "auto" }}
+                  exit={{ opacity: 0, width: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent whitespace-nowrap overflow-hidden"
+                >
+                  InvoiceFlow
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className="shrink-0 p-2 rounded-lg text-gray-500 hover:text-primary hover:bg-primary/10 transition-colors"
+            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <Icon name={collapsed ? "PanelRightOpen" : "PanelLeftClose"} size={20} />
+          </button>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+        <nav className="flex-1 space-y-1 overflow-y-auto pr-1 custom-scrollbar">
           {filteredMenuItems.map((item) => {
             const isActive = pathname.startsWith(item.path);
-
             return (
               <Link
                 key={item.path}
                 href={item.path}
                 className="block relative group"
+                title={collapsed ? item.name : undefined}
               >
                 {isActive && (
                   <motion.div
@@ -59,23 +105,36 @@ const Sidebar = () => {
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
-
-                <div className={clsx(
-                  "relative flex items-center gap-4 px-4 py-3 rounded-xl transition-colors duration-200",
-                  isActive ? "text-primary font-semibold" : "text-gray-500 hover:text-gray-900 hover:bg-white/30"
-                )}>
+                <div
+                  className={clsx(
+                    "relative flex items-center rounded-xl transition-colors duration-200",
+                    collapsed ? "justify-center px-3 py-3" : "gap-3 px-4 py-3",
+                    isActive ? "text-primary font-semibold" : "text-gray-500 hover:text-gray-900 hover:bg-white/30"
+                  )}
+                >
                   <Icon
                     name={item.icon}
-                    size={20}
-                    className={isActive ? "text-primary" : "text-gray-400 group-hover:text-primary transition-colors"}
+                    size={22}
+                    className={clsx("shrink-0", isActive ? "text-primary" : "text-gray-400 group-hover:text-primary transition-colors")}
                   />
-                  <span>{item.name}</span>
-
-                  {isActive && (
+                  <AnimatePresence initial={false}>
+                    {!collapsed && (
+                      <motion.span
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                        className="truncate flex-1"
+                      >
+                        {item.name}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  {!collapsed && isActive && (
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="ml-auto w-1.5 h-1.5 rounded-full bg-primary"
+                      className="w-1.5 h-1.5 rounded-full bg-primary shrink-0"
                     />
                   )}
                 </div>
@@ -84,12 +143,10 @@ const Sidebar = () => {
           })}
         </nav>
 
-        {/* Version Indicator */}
-        <div className="mt-auto pt-6 border-t border-gray-200/30 flex justify-between items-center px-2">
-          <span className="text-xs font-mono text-gray-400">v{APP_VERSION}</span>
-          <div className="flex gap-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-success/50 animate-pulse" title="System Online"></div>
-          </div>
+        {/* Version + Online */}
+        <div className={clsx("mt-auto pt-4 border-t border-gray-200/30 flex items-center", collapsed ? "justify-center px-0" : "justify-between px-2 gap-2")}>
+          {!collapsed && <span className="text-xs font-mono text-gray-400">v{APP_VERSION}</span>}
+          <div className="w-2 h-2 rounded-full bg-success/60 animate-pulse shrink-0" title="System Online" />
         </div>
       </div>
     </aside>
