@@ -152,8 +152,8 @@ export default function DashboardPage() {
     <div className="pb-10">
       {/* Role-Aware Header */}
       {user?.role === ROLES.ADMIN ? (
-        /* Clean Admin Header - pulled to top */
-        <header className="bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 -mt-12 -mx-6 px-6 md:-mt-14 md:-mx-8 md:px-8">
+        /* Clean Admin Header */
+        <header className="bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 px-6 rounded-t-3xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2.5 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-500/20">
@@ -190,8 +190,8 @@ export default function DashboardPage() {
           </div>
         </header>
       ) : (
-        /* Standard Header for Other Roles - pulled to top */
-        <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 -mt-6 -mx-6 px-6 md:-mt-8 md:-mx-8 md:px-8 transition-all">
+        /* Standard Header for Other Roles */
+        <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 px-6 rounded-t-3xl transition-all">
           <div className="flex flex-row items-center justify-between gap-3 lg:gap-6">
 
             {/* Left: Title & Context */}
