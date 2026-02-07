@@ -5,23 +5,21 @@
 
 export const ROLES = {
     ADMIN: 'Admin',
-    FINANCE_MANAGER: 'Finance Manager',
     PROJECT_MANAGER: 'PM',
     FINANCE_USER: 'Finance User',
-    VENDOR: 'Vendor',
-    AUDITOR: 'Auditor'
+    VENDOR: 'Vendor'
 };
 
 export const MENU_PERMISSIONS = {
-    'Dashboard': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.PROJECT_MANAGER, ROLES.FINANCE_USER, ROLES.VENDOR, ROLES.AUDITOR],
-    'Digitization': [ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER],
-    'Matching': [ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER, ROLES.PROJECT_MANAGER],
-    'Approvals': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.PROJECT_MANAGER],
-    'Vendors': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER, ROLES.VENDOR],
-    'Analytics': [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.AUDITOR],
+    'Dashboard': [ROLES.ADMIN, ROLES.PROJECT_MANAGER, ROLES.FINANCE_USER, ROLES.VENDOR],
+    'Digitization': [ROLES.ADMIN, ROLES.FINANCE_USER],
+    'Matching': [ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.PROJECT_MANAGER],
+    'Approvals': [ROLES.ADMIN, ROLES.PROJECT_MANAGER],
+    'Vendors': [ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.VENDOR],
+    'Analytics': [ROLES.ADMIN],
     'Configuration': [ROLES.ADMIN],
     'User Management': [ROLES.ADMIN],
-    'Audit Logs': [ROLES.ADMIN, ROLES.AUDITOR, ROLES.FINANCE_MANAGER]
+    'Audit Logs': [ROLES.ADMIN]
 };
 
 /**
@@ -36,11 +34,6 @@ export const hasPermission = (user, action, resource = null) => {
 
     const effectiveRole = user.role;
 
-    // Auditor is strictly read-only
-    if (effectiveRole === ROLES.AUDITOR && !action.startsWith('VIEW_')) {
-        return false;
-    }
-
     switch (action) {
         case 'CONFIGURE_SYSTEM':
         case 'MANAGE_USERS':
@@ -54,18 +47,18 @@ export const hasPermission = (user, action, resource = null) => {
                 }
                 return true; // General permission check
             }
-            return [ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER].includes(effectiveRole);
+            return effectiveRole === ROLES.FINANCE_USER;
 
         case 'FINALIZE_PAYMENT':
-            return effectiveRole === ROLES.FINANCE_MANAGER;
+            return false; // Only Admin? Or maybe Finance User now? Let's assume removed role's duty goes to Admin or Finance User.
 
         case 'PROCESS_DISCREPANCIES':
         case 'MANUAL_ENTRY':
-            return [ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER].includes(effectiveRole);
+            return effectiveRole === ROLES.FINANCE_USER;
 
         case 'VIEW_AUDIT_LOGS':
         case 'VIEW_COMPLIANCE':
-            return [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.AUDITOR].includes(effectiveRole);
+            return effectiveRole === ROLES.ADMIN;
 
         case 'SUBMIT_INVOICE':
             return [ROLES.VENDOR, ROLES.FINANCE_USER].includes(effectiveRole);
@@ -74,7 +67,7 @@ export const hasPermission = (user, action, resource = null) => {
             // Vendors and PMs have scoped views, so they don't have "VIEW_ALL"
             // But they can view "Invoices", just a subset.
             // This permission name might be misleading. Let's interpret it as "Access Invoice List"
-            return [ROLES.ADMIN, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER, ROLES.AUDITOR, ROLES.PROJECT_MANAGER, ROLES.VENDOR].includes(effectiveRole);
+            return [ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.PROJECT_MANAGER, ROLES.VENDOR].includes(effectiveRole);
 
         default:
             return false;

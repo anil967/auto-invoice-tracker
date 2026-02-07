@@ -15,6 +15,14 @@ export async function POST(request) {
             );
         }
 
+        const validRoles = ['Admin', 'PM', 'Finance User', 'Vendor'];
+        if (!validRoles.includes(role)) {
+            return NextResponse.json(
+                { error: 'Invalid role selected' },
+                { status: 400 }
+            );
+        }
+
         // Check if user already exists
         const existingUser = await db.getUserByEmail(email);
         if (existingUser) {

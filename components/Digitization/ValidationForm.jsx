@@ -95,7 +95,7 @@ const ValidationForm = ({ invoice: initialInvoice }) => {
   };
 
   const { user } = useAuth();
-  const isAuditor = user?.role === ROLES.AUDITOR;
+  const isAuditor = false;
 
   return (
     <Card className="h-full flex flex-col bg-white/40 border-white/60 backdrop-blur-xl overflow-hidden rounded-[2rem] shadow-2xl">

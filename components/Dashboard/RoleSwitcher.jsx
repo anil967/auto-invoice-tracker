@@ -28,9 +28,7 @@ const RoleSwitcher = () => {
                         name={
                             role === ROLES.ADMIN ? "Shield" :
                                 role === ROLES.PROJECT_MANAGER ? "Briefcase" :
-                                    role === ROLES.AUDITOR ? "Eye" :
-                                        role === ROLES.FINANCE_MANAGER ? "Award" :
-                                            role === ROLES.VENDOR ? "Store" : "DollarSign"
+                                    role === ROLES.VENDOR ? "Store" : "DollarSign"
                         }
                         size={12}
                     />
