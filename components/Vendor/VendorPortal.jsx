@@ -18,9 +18,8 @@ const VendorPortal = ({ onUploadClick }) => {
         const fetchInvoices = async () => {
             try {
                 const data = await getAllInvoices();
-                // Filter for this vendor ONLY (Simulation: Vendor sees all for demo or specific company)
-                const vendorData = data.filter(inv => inv.vendorName === user?.name || user?.role === 'Admin' || !user);
-                setInvoices(vendorData);
+                // Server-side filtering already handles vendor isolation
+                setInvoices(data);
             } catch (error) {
                 console.error("Failed to fetch vendor invoices", error);
             } finally {
