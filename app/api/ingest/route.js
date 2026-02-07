@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { processInvoice } from '@/lib/processor';
+import { getCurrentUser } from '@/lib/server-auth';
+import { ROLES } from '@/constants/roles';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function POST(request) {
@@ -10,6 +12,12 @@ export async function POST(request) {
 
         if (!file) {
             return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+        }
+
+        // Get the authenticated user to associate invoice with vendor
+        const user = await getCurrentUser();
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -23,6 +31,7 @@ export async function POST(request) {
         const invoiceId = `INV-${uuidv4().slice(0, 8).toUpperCase()}`;
         const invoiceMetadata = {
             id: invoiceId,
+            vendorName: user.role === ROLES.VENDOR ? user.name : 'Pending Identification',
             originalName: file.name,
             fileUrl: fileUrl, // Accessible Data URI
             status: 'RECEIVED',

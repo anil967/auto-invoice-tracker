@@ -19,9 +19,8 @@ export default function VendorPortal() {
         const fetchSubmissions = async () => {
             try {
                 const data = await getAllInvoices();
-                // Simulation: Filter by the current logged-in vendor name or allow all for demo
-                const vendorData = data.filter(inv => inv.vendorName === user?.name || user?.role === 'Admin' || !user);
-                setAllSubmissions(vendorData);
+                // Server-side filtering already handles vendor isolation
+                setAllSubmissions(data);
             } catch (e) {
                 console.error("Failed to fetch vendor submissions", e);
             } finally {
