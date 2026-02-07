@@ -375,7 +375,7 @@ export default function DashboardPage() {
                       {user?.role === ROLES.PROJECT_MANAGER && (
                         <button
                           onClick={() => {
-                            const to = prompt("Delegate PM authority to (e.g. Finance Manager):");
+                            const to = prompt("Delegate PM authority to (e.g. Finance User):");
                             if (to) alert(`Delegated to ${to}`);
                           }}
                           className="btn btn-sm btn-outline btn-primary w-full gap-3 mt-4"

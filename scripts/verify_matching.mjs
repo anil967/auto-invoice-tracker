@@ -1,6 +1,6 @@
 
-const { matchingEngine } = require('../lib/matching');
-const { integration } = require('../lib/integration');
+import { matchingEngine } from '../lib/matching.js';
+import { integration } from '../lib/integration.js';
 
 // Mock Data
 const mockInvoice = {

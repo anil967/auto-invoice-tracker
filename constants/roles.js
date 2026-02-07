@@ -50,7 +50,7 @@ export const hasPermission = (user, action, resource = null) => {
             return effectiveRole === ROLES.FINANCE_USER;
 
         case 'FINALIZE_PAYMENT':
-            return false; // Only Admin? Or maybe Finance User now? Let's assume removed role's duty goes to Admin or Finance User.
+            return [ROLES.ADMIN, ROLES.FINANCE_USER].includes(effectiveRole);
 
         case 'PROCESS_DISCREPANCIES':
         case 'MANUAL_ENTRY':
