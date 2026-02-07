@@ -1,14 +1,29 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/constants/roles";
 import { getAllInvoices } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 
 export default function ApprovalsPage() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (![ROLES.ADMIN, ROLES.PROJECT_MANAGER].includes(user.role)) {
+        router.push("/dashboard");
+      }
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -122,7 +137,7 @@ export default function ApprovalsPage() {
 
                 {/* Action */}
                 <Link href={`/approvals/${invoice.id}`} className="w-full">
-                  <button className="btn btn-warning btn-outline w-full hover:!text-white shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
+                  <button className="btn btn-warning btn-outline w-full hover:text-white! shadow-lg shadow-warning/10 group-hover:scale-[1.02] transition-transform">
                     Review & Approve
                     <Icon name="ArrowRight" size={18} />
                   </button>

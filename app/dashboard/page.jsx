@@ -14,6 +14,7 @@ import Card from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
 import AdminDashboard from "@/components/Dashboard/Roles/AdminDashboard";
 import FinanceUserDashboard from "@/components/Dashboard/Roles/FinanceUserDashboard";
+import ProjectManagerDashboard from "@/components/Dashboard/Roles/ProjectManagerDashboard";
 import VendorPortal from "@/components/Vendor/VendorPortal";
 import NotificationLog from "@/components/Workflow/NotificationLog";
 import { ROLES } from "@/constants/roles";
@@ -296,6 +297,8 @@ export default function DashboardPage() {
         <AdminDashboard />
       ) : user?.role === ROLES.FINANCE_USER ? (
         <FinanceUserDashboard invoices={invoices} onUploadComplete={handleUploadComplete} />
+      ) : user?.role === ROLES.PROJECT_MANAGER ? (
+        <ProjectManagerDashboard user={user} />
       ) : (
         <>
           {activeTab === 'analytics' ? (
