@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/constants/roles";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/"];
 
@@ -26,11 +27,9 @@ export default function RouteGuard({ children }) {
             setAuthorized(false);
             router.push("/login");
         } else if (user && isPublicPath && path !== "/") {
-            // User is logged in and trying to access login/signup
-            // Allow access to landing page ("/") even if logged in, or redirect to dashboard?
-            // Usually landing page is fine, but login/signup should redirect.
+            // User is logged in and trying to access login/signup -> redirect to app
             setAuthorized(true);
-            router.push("/dashboard");
+            router.push(user.role === ROLES.VENDOR ? "/vendors" : "/dashboard");
         } else {
             setAuthorized(true);
         }

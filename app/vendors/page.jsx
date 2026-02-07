@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
 import Link from "next/link";
@@ -11,27 +12,37 @@ import Card from "@/components/ui/Card";
 import clsx from "clsx";
 
 export default function VendorPortal() {
-    const { user } = useAuth();
+    const router = useRouter();
+    const { user, logout, isLoading: authLoading } = useAuth();
     const [allSubmissions, setAllSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const fetchIdRef = useRef(0);
+
+    const fetchSubmissions = useCallback(async () => {
+        const thisFetchId = ++fetchIdRef.current;
+        try {
+            const data = await getAllInvoices();
+            // Only apply if this is still the latest fetch (prevents stale poll from removing submission)
+            if (thisFetchId !== fetchIdRef.current) return;
+            setAllSubmissions(Array.isArray(data) ? data : []);
+        } catch (e) {
+            console.error("Failed to fetch vendor submissions", e);
+            if (thisFetchId !== fetchIdRef.current) return;
+            // Don't clear list on error – keep showing current submissions
+        } finally {
+            if (thisFetchId === fetchIdRef.current) setLoading(false);
+        }
+    }, []);
 
     useEffect(() => {
-        const fetchSubmissions = async () => {
-            try {
-                const data = await getAllInvoices();
-                // Server-side filtering already handles vendor isolation
-                setAllSubmissions(data);
-            } catch (e) {
-                console.error("Failed to fetch vendor submissions", e);
-            } finally {
-                setLoading(false);
-            }
-        };
-
+        if (!authLoading && !user) {
+            router.push("/login");
+            return;
+        }
         fetchSubmissions();
-        const interval = setInterval(fetchSubmissions, 5000);
+        const interval = setInterval(fetchSubmissions, 5000); // Poll every 5s; immediate refetch still on upload
         return () => clearInterval(interval);
-    }, [user]);
+    }, [user, authLoading, router, fetchSubmissions]);
 
     const stats = useMemo(() => {
         const total = allSubmissions.length;
@@ -41,9 +52,10 @@ export default function VendorPortal() {
         return { total, paid, pending, amount };
     }, [allSubmissions]);
 
-    const handleUploadComplete = () => {
-        // Polling will handle the update
-    };
+    const handleUploadComplete = useCallback(() => {
+        setLoading(true);
+        fetchSubmissions();
+    }, [fetchSubmissions]);
 
     const getStatusStyle = (status) => {
         switch (status) {
@@ -88,6 +100,17 @@ export default function VendorPortal() {
         document.body.removeChild(link);
     };
 
+    if (authLoading || !user) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+                <div className="text-center">
+                    <span className="loading loading-spinner loading-lg text-teal-600"></span>
+                    <p className="mt-4 text-slate-500">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#F8FAFC] font-sans text-slate-900 overflow-x-hidden">
             {/* 1. Integrated Glass Navbar */}
@@ -117,6 +140,13 @@ export default function VendorPortal() {
                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-teal-500 to-emerald-600 shadow-lg shadow-teal-500/20 flex items-center justify-center border-2 border-white">
                             <Icon name="User" size={20} className="text-white" />
                         </div>
+                        <button
+                            onClick={logout}
+                            className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all"
+                            title="Sign Out"
+                        >
+                            <Icon name="LogOut" size={20} />
+                        </button>
                     </div>
                 </div>
             </nav>

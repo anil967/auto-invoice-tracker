@@ -35,10 +35,14 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState("overview");
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-  // Protect route - redirect to login if not authenticated
+  // Protect route and send vendors to vendor page
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login");
+      router.push("/login");
+      return;
+    }
+    if (!authLoading && user?.role === ROLES.VENDOR) {
+      router.replace("/vendors");
     }
   }, [user, authLoading, router]);
 
@@ -132,8 +136,8 @@ export default function DashboardPage() {
 
 
 
-  // Show loading state while checking authentication
-  if (authLoading || !user) {
+  // Show loading state while checking authentication or redirecting vendors
+  if (authLoading || !user || user?.role === ROLES.VENDOR) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

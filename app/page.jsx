@@ -5,9 +5,11 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
 import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/constants/roles";
 
 export default function LandingPage() {
   const { user, isLoading } = useAuth();
+  const isVendor = user?.role === ROLES.VENDOR;
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden bg-[#F8F9FC]">
@@ -23,8 +25,8 @@ export default function LandingPage() {
         </div>
         <div className="flex gap-4">
           {!isLoading && user ? (
-            <Link href="/dashboard">
-              <button className="btn btn-primary btn-sm md:btn-md rounded-full px-6 text-white shadow-lg shadow-primary/20">Dashboard</button>
+            <Link href={isVendor ? "/vendors" : "/dashboard"}>
+              <button className="btn btn-primary btn-sm md:btn-md rounded-full px-6 text-white shadow-lg shadow-primary/20">{isVendor ? "Vendor Hub" : "Dashboard"}</button>
             </Link>
           ) : (
             <>
@@ -65,13 +67,13 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <Link href={!isLoading && user ? "/dashboard" : "/signup"}>
+            <Link href={!isLoading && user ? (isVendor ? "/vendors" : "/dashboard") : "/signup"}>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="btn btn-primary btn-lg rounded-full px-10 shadow-xl shadow-primary/30 border-none bg-linear-to-r from-primary to-accent text-white font-bold text-lg group"
               >
-                {!isLoading && user ? "Enter Dashboard" : "Get Started"}
+                {!isLoading && user ? (isVendor ? "Enter Vendor Hub" : "Enter Dashboard") : "Get Started"}
                 <Icon name="ArrowRight" className="ml-2 group-hover:translate-x-1 transition-transform" />
               </motion.button>
             </Link>

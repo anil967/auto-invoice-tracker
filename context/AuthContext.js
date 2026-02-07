@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             setUser(data.user);
-            router.push("/dashboard");
+            router.push(data.user?.role === ROLES.VENDOR ? "/vendors" : "/dashboard");
         } catch (error) {
             console.error("Login failed", error);
             throw error;
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }) => {
             }
 
             setUser(data.user);
-            router.push("/dashboard");
+            router.push(data.user?.role === ROLES.VENDOR ? "/vendors" : "/dashboard");
         } catch (error) {
             console.error("Signup failed", error);
             throw error;
