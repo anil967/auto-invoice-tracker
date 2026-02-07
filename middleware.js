@@ -56,9 +56,10 @@ export async function middleware(request) {
             // Set role header for internal API use
             response.headers.set('x-user-role', userRole);
 
-            // Redirect to dashboard if logged in and trying to access login/signup
+            // Redirect to app if logged in and trying to access login/signup
             if (pathname === '/login' || pathname === '/signup') {
-                return NextResponse.redirect(new URL('/dashboard', request.url));
+                const redirectPath = userRole === 'Vendor' ? '/vendors' : '/dashboard';
+                return NextResponse.redirect(new URL(redirectPath, request.url));
             }
         } catch (e) {
             console.error("Middleware session decryption failed", e);

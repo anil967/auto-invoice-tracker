@@ -33,12 +33,14 @@ const DropZone = ({ onUploadComplete }) => {
       setUploadProgress(100);
       setUploadSuccess(true);
 
+      // Notify parent immediately so list/stats can refetch and detect the new submission
+      if (onUploadComplete) onUploadComplete();
+
       // Reset after success animation
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
         setUploadSuccess(false);
-        if (onUploadComplete) onUploadComplete();
       }, 1500);
 
     } catch (error) {

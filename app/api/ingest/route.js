@@ -29,19 +29,21 @@ export async function POST(request) {
         const fileUrl = `data:${mimeType};base64,${base64String}`;
 
         const invoiceId = `INV-${uuidv4().slice(0, 8).toUpperCase()}`;
+        const receivedAt = new Date().toISOString();
         const invoiceMetadata = {
             id: invoiceId,
             vendorName: user.role === ROLES.VENDOR ? user.name : 'Pending Identification',
+            submittedByUserId: user.id, // So vendor list filters by user.id and updates correctly
             originalName: file.name,
-            fileUrl: fileUrl, // Accessible Data URI
+            fileUrl: fileUrl,
             status: 'RECEIVED',
-            receivedAt: new Date().toISOString(),
-            ingestedAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            logs: []
+            receivedAt,
+            auditUsername: user.name || 'Vendor',
+            auditAction: 'SUBMIT',
+            auditDetails: `Invoice "${file.name}" submitted via vendor portal (${user.role === ROLES.VENDOR ? 'Vendor' : user.role})`
         };
 
-        // Save initial state
+        // Persist to DB and create audit trail (Admin can see via Audit log - RBAC)
         await db.saveInvoice(invoiceId, invoiceMetadata);
 
         // Perform processing inline (Simulation)

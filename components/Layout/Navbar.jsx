@@ -8,6 +8,7 @@ import { canSeeMenuItem } from "@/constants/roles";
 
 
 const Navbar = () => {
+  const { user } = useAuth();
   const [notifications] = useState(3);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [areNotificationsOpen, setAreNotificationsOpen] = useState(false);
@@ -58,6 +59,7 @@ const Navbar = () => {
           {isMobileMenuOpen && (
             <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52 absolute left-0 top-full">
               {canSeeMenuItem(user, 'Dashboard') && <li><Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>Dashboard</Link></li>}
+              {canSeeMenuItem(user, 'Vendors') && <li><Link href="/vendors" onClick={() => setIsMobileMenuOpen(false)}>Vendors</Link></li>}
               {canSeeMenuItem(user, 'Digitization') && <li><Link href="/digitization" onClick={() => setIsMobileMenuOpen(false)}>Digitization</Link></li>}
               {canSeeMenuItem(user, 'Approvals') && <li><Link href="/approvals" onClick={() => setIsMobileMenuOpen(false)}>Approvals</Link></li>}
               {canSeeMenuItem(user, 'Analytics') && <li><Link href="/analytics" onClick={() => setIsMobileMenuOpen(false)}>Analytics</Link></li>}
