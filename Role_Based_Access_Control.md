@@ -19,19 +19,7 @@ Complete system control with full administrative privileges
 • Audit log access and review
 • Backup and disaster recovery management
 
-## 2. Finance Manager
-Senior financial authority with approval and oversight capabilities
-
-**Feature Access:**
-• Final invoice approval authority
-• Payment release authorization
-• Access to all financial reports and dashboards
-• Invoice status tracking across all projects
-• Vendor performance analytics
-• End-to-end visibility of invoice lifecycle
-• Audit trail review
-
-## 3. Project Manager (PM)
+## 2. Project Manager (PM)
 Project-level invoice approval and vendor communication
 
 **Feature Access:**
@@ -43,7 +31,7 @@ Project-level invoice approval and vendor communication
 • Receive notifications for pending approvals
 • Access to project-specific invoice reports
 
-## 4. Finance User
+## 3. Finance User
 Operational processing and data management capabilities
 
 **Feature Access:**
@@ -55,7 +43,7 @@ Operational processing and data management capabilities
 • Process manual review queues
 • Basic reporting for operational tracking
 
-## 5. Vendor
+## 4. Vendor
 Limited external access for invoice submission and tracking
 
 **Feature Access:**
@@ -69,30 +57,14 @@ Limited external access for invoice submission and tracking
 • No access to other vendors' data
 • No access to system configuration
 
-## 6. Auditor
-Read-only access for compliance and audit purposes
-
-**Feature Access:**
-• Read-only access to all invoice records
-• Complete audit trail review
-• Compliance report generation
-• Historical data access (7-year retention)
-• Access to all system logs and timestamps
-
-**Restrictions:**
-• No modification capabilities
-• No approval authority
-
 ## Summary Matrix
 
 | Role | Create | Read | Update | Approve | Configure |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Admin** | ✅ (3) | ✅ (3) | ✅ (3) | ✅ (3) | ✅ (3) |
-| **Finance Manager** | — | ✅ (3) | — | ✅ (3) | — |
 | **Project Manager** | — | ✅ (3) | — | ✅ (3) | — |
 | **Finance User** | ✅ (3) | ✅ (3) | ✅ (3) | — | — |
 | **Vendor** | ✅ (3) | Limited | — | — | — |
-| **Auditor** | — | ✅ (3) | — | — | — |
 
 ## Notes
 • The PRD does not provide granular feature-level permissions beyond these role descriptions.

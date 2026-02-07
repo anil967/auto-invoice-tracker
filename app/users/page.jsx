@@ -119,11 +119,9 @@ export default function UserManagementPage() {
 
     const roleColors = {
         [ROLES.ADMIN]: 'bg-purple-50 text-purple-700 border-purple-100',
-        [ROLES.FINANCE_MANAGER]: 'bg-blue-50 text-blue-700 border-blue-100',
         [ROLES.PROJECT_MANAGER]: 'bg-orange-50 text-orange-700 border-orange-100',
         [ROLES.FINANCE_USER]: 'bg-teal-50 text-teal-700 border-teal-100',
-        [ROLES.VENDOR]: 'bg-amber-50 text-amber-700 border-amber-100',
-        [ROLES.AUDITOR]: 'bg-gray-50 text-gray-700 border-gray-100'
+        [ROLES.VENDOR]: 'bg-amber-50 text-amber-700 border-amber-100'
     };
 
     return (
@@ -218,8 +216,8 @@ export default function UserManagementPage() {
                                             <button
                                                 onClick={() => handleToggleStatus(user)}
                                                 className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-colors ${user.isActive !== false
-                                                        ? 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
-                                                        : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
+                                                    ? 'bg-green-50 text-green-700 border-green-100 hover:bg-green-100'
+                                                    : 'bg-red-50 text-red-700 border-red-100 hover:bg-red-100'
                                                     }`}
                                             >
                                                 <div className={`w-2 h-2 rounded-full ${user.isActive !== false ? 'bg-green-500' : 'bg-red-400'}`}></div>

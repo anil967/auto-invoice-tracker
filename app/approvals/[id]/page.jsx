@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/constants/roles";
 import { getInvoiceStatus } from "@/lib/api";
 import ThreeWayMatch from "@/components/Matching/ThreeWayMatch";
 import AuditTrail from "@/components/Workflow/AuditTrail";
@@ -13,10 +15,23 @@ import { motion } from "framer-motion";
 export default function ApprovalDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (![ROLES.ADMIN, ROLES.PROJECT_MANAGER].includes(user.role)) {
+        router.push("/dashboard");
+      }
+    }
+  }, [user, authLoading, router]);
+
+  useEffect(() => {
+    if (authLoading || !user) return; // Wait for auth
+
     const fetchInvoice = async () => {
       try {
         const foundInvoice = await getInvoiceStatus(params.id);

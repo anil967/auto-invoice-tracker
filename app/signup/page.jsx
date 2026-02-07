@@ -110,10 +110,8 @@ export default function SignupPage() {
                                 className="select w-full bg-white/50 border-gray-200 focus:bg-white focus:ring-2 focus:ring-primary/20 rounded-xl transition-all text-gray-900"
                             >
                                 <option value={ROLES.FINANCE_USER} className="text-gray-900 bg-white">Finance User</option>
-                                <option value={ROLES.FINANCE_MANAGER} className="text-gray-900 bg-white">Finance Manager</option>
                                 <option value={ROLES.PROJECT_MANAGER} className="text-gray-900 bg-white">Project Manager</option>
                                 <option value={ROLES.ADMIN} className="text-gray-900 bg-white">Admin</option>
-                                <option value={ROLES.AUDITOR} className="text-gray-900 bg-white">Auditor</option>
                                 <option value={ROLES.VENDOR} className="text-gray-900 bg-white">Vendor</option>
                             </select>
                         </div>

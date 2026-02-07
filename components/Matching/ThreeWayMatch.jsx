@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
-import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import { transitionWorkflow, getAllInvoices } from "@/lib/api";
+import { transitionWorkflow, getInvoiceStatus } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { hasPermission } from "@/constants/roles";
@@ -14,64 +13,55 @@ import clsx from "clsx";
 const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   const router = useRouter();
   const [invoice, setInvoice] = useState(initialInvoice);
-  const [purchaseOrder, setPurchaseOrder] = useState(null);
-  const [goodsReceipt, setGoodsReceipt] = useState(null);
-  const [matchStatus, setMatchStatus] = useState(
-    ['VERIFIED', 'PAID', 'PENDING_APPROVAL'].includes(initialInvoice?.status) ? 'matched' :
-      (initialInvoice?.status === 'MATCH_DISCREPANCY' ? 'discrepancy' : 'analyzing')
-  );
   const { user } = useAuth();
   const [processing, setProcessing] = useState(false);
 
-  // --- Real-time Polling for Match Results ---
+  // Use backend data
+  const matchResult = invoice?.matching || {};
+  const purchaseOrder = matchResult.poData;
+  const goodsReceipt = matchResult.grData;
+  const matchStatus = invoice?.status === 'VERIFIED' ? 'matched' :
+    invoice?.status === 'MATCH_DISCREPANCY' ? 'discrepancy' : 'analyzing';
+
+  // --- Real-time Polling for Status Updates ---
   useEffect(() => {
-    if (['RECEIVED', 'DIGITIZING'].includes(invoice?.status)) {
+    if (['RECEIVED', 'DIGITIZING', 'PROCESSING'].includes(invoice?.status)) {
       const interval = setInterval(async () => {
         try {
-          const allInvoices = await getAllInvoices();
-          const currentInvoice = allInvoices.find(inv => inv.id === invoice.id);
-
-          if (currentInvoice && currentInvoice.status !== invoice.status &&
-            (['VERIFIED', 'MATCH_DISCREPANCY'].includes(currentInvoice.status))) {
-            clearInterval(interval);
-            setInvoice(currentInvoice);
-            setMatchStatus(currentInvoice.status === 'VERIFIED' ? 'matched' : 'discrepancy');
+          // Poll specifically for this invoice's latest status
+          const updated = await getInvoiceStatus(invoice.id);
+          if (updated && updated.status !== invoice.status) {
+            setInvoice(updated);
+            if (['VERIFIED', 'MATCH_DISCREPANCY'].includes(updated.status)) {
+              clearInterval(interval);
+            }
           }
         } catch (e) {
           console.error("Polling error", e);
         }
-      }, 2000);
+      }, 3000);
       return () => clearInterval(interval);
     }
   }, [invoice?.id, invoice?.status]);
 
-  // --- External Data Simulation (SAP/Ringi) ---
+  // Trigger Match if not yet run (e.g. if we land here and status is VALIDATION_REQUIRED)
   useEffect(() => {
-    if (!invoice || matchStatus === 'analyzing') return;
+    if (invoice?.status === 'VALIDATION_REQUIRED' && !invoice.matching) {
+      handleRunMatch();
+    }
+  }, []);
 
-    const mockPO = {
-      id: invoice.poNumber || "PO-2026-001",
-      date: "2026-02-01",
-      vendor: invoice.vendorName,
-      total: invoice.status === 'VERIFIED' ? invoice.totalAmount || invoice.amount : (invoice.totalAmount || invoice.amount) + 100,
-      items: (invoice.lineItems || invoice.items || []).map(item => ({
-        ...item,
-        unitPrice: invoice.status === 'VERIFIED' ? item.unitPrice : item.unitPrice * 1.1
-      }))
-    };
+  const handleRunMatch = async () => {
+    try {
+      // Call API to run matching logic
+      await transitionWorkflow(invoice.id, 'PROCESS_MATCH', "Initiating automated matching");
+      // Polling will pick up the result
+    } catch (e) {
+      console.error("Failed to run match", e);
+    }
+  };
 
-    setPurchaseOrder(mockPO);
-    setGoodsReceipt({
-      id: "GR-999",
-      date: "2026-02-03",
-      receivedBy: "Warehouse B",
-      items: mockPO.items
-    });
-  }, [invoice, matchStatus]);
-
-
-
-  const handleMatch = async () => {
+  const handleApprove = async () => {
     setProcessing(true);
     try {
       const response = await transitionWorkflow(invoice.id, 'APPROVE', "Automated match confirmed by user.");
@@ -85,10 +75,10 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
     }
   };
 
-  const handleFlagException = async () => {
+  const handleReject = async () => {
     setProcessing(true);
     try {
-      const response = await transitionWorkflow(invoice.id, 'REJECT', "Discrepancy flagged for manual review.");
+      const response = await transitionWorkflow(invoice.id, 'REJECT', "Discrepancy flagged by user.");
       setInvoice(response.invoice);
       router.push("/matching");
     } catch (error) {
@@ -102,16 +92,6 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
   const canApprove = () => {
     if (!user) return false;
     return hasPermission(user, 'APPROVE_MATCH');
-  };
-
-  // Helper to compare values and return color class
-  const getComparisonClass = (val1, val2) => {
-    // Simple float comparison tolerance
-    const num1 = Number(val1);
-    const num2 = Number(val2);
-
-    if (Math.abs(num1 - num2) < 0.01) return "text-success bg-success/10";
-    return "text-error bg-error/10 font-bold animate-pulse";
   };
 
   if (!invoice) return null;
@@ -149,8 +129,8 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            disabled={user?.role === 'Auditor' || matchStatus === "analyzing" || processing}
-            onClick={handleFlagException}
+            disabled={matchStatus === "analyzing" || processing}
+            onClick={handleReject}
             className="h-12 px-8 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] border-slate-200 text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm"
           >
             Reject
@@ -158,7 +138,7 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
           <Button
             variant="ghost"
             disabled={!canApprove() || matchStatus === "analyzing" || processing}
-            onClick={handleMatch}
+            onClick={handleApprove}
             loading={processing}
             className="h-12 px-10 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] bg-teal-600 hover:bg-teal-700 text-white shadow-lg shadow-teal-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-30 border-none disabled:cursor-not-allowed"
           >
@@ -232,8 +212,11 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
               {(invoice.items || []).map((invItem, idx) => {
                 const poItem = purchaseOrder?.items[idx] || {};
                 const grItem = goodsReceipt?.items[idx] || {};
-                const priceMatch = Math.abs(invItem.unitPrice - poItem.unitPrice) < 0.01;
-                const qtyMatch = invItem.quantity === poItem.quantity && invItem.quantity === grItem.quantity;
+
+                // Logic already handled in backend, but we need to visualize diffs here for UI
+                // We can use the same simple comparison for display purposes
+                const priceMatch = Math.abs(invItem.unitPrice - (poItem.unitPrice || 0)) < 0.01;
+                const qtyMatch = invItem.quantity === (poItem.quantity || 0) && invItem.quantity === (grItem.quantity || 0);
                 const rowMatch = priceMatch && qtyMatch;
 
                 return (
@@ -270,8 +253,8 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
 
                     {/* GR Data */}
                     <td className="px-8 py-5 border-l border-slate-50 text-center bg-orange-500/5 group-hover:bg-orange-500/10 transition-colors font-black">
-                      <span className={clsx("text-sm", invItem.quantity === grItem.quantity ? "text-orange-600" : "text-rose-600 font-extrabold animate-pulse")}>
-                        {grItem.quantity || '0'}
+                      <span className={clsx("text-sm", invItem.quantity === (grItem.quantity || grItem.accepted) ? "text-orange-600" : "text-rose-600 font-extrabold animate-pulse")}>
+                        {grItem.quantity || grItem.accepted || '0'}
                       </span>
                     </td>
 
@@ -297,19 +280,19 @@ const ThreeWayMatch = ({ invoice: initialInvoice }) => {
           <div className="flex gap-8">
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center md:text-left">Invoiced Total</p>
-              <p className="text-2xl font-black text-slate-900">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(invoice.amount)}</p>
+              <p className="text-2xl font-black text-slate-900">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(invoice.amount || 0)}</p>
             </div>
             <div className="space-y-1">
               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center md:text-left">PO Authorized</p>
-              <p className={clsx("text-2xl font-black", purchaseOrder && Math.abs(invoice.amount - purchaseOrder.total) < 0.01 ? "text-slate-900" : "text-rose-600")}>
-                {purchaseOrder ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(purchaseOrder.total) : '---'}
+              <p className={clsx("text-2xl font-black", purchaseOrder && Math.abs((invoice.amount || 0) - purchaseOrder.totalAmount) < 0.01 ? "text-slate-900" : "text-rose-600")}>
+                {purchaseOrder ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(purchaseOrder.totalAmount) : '---'}
               </p>
             </div>
           </div>
 
-          {invoice.matching?.discrepancies?.length > 0 && (
+          {matchResult.discrepancies?.length > 0 && (
             <div className="flex-1 max-w-md p-5 bg-rose-50 border border-rose-100 rounded-[1.5rem] space-y-2.5 shadow-inner">
-              {invoice.matching.discrepancies.map((d, i) => (
+              {matchResult.discrepancies.map((d, i) => (
                 <div key={i} className="flex items-center gap-3 text-[11px] font-bold text-rose-700 uppercase tracking-tight">
                   <Icon name="AlertCircle" size={16} className="shrink-0 animate-pulse" />
                   <span>{d}</span>

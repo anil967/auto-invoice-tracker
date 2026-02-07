@@ -110,11 +110,9 @@ Automated email notifications within 5 minutes for: invoice receipt, rejection w
 | Role | Permissions |
 |------|-------------|
 | Admin | Full system access, user management, configuration |
-| Finance Manager | Final approval, payment release, reports |
 | Project Manager | Invoice approval, vendor communication |
 | Finance User | Invoice processing, status tracking |
 | Vendor | Invoice submission, status tracking (restricted) |
-| Auditor | Read-only access for audit purposes |
 
 ## 7. Success Criteria & KPIs
 

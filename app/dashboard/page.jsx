@@ -13,9 +13,8 @@ import StatCard from "@/components/Dashboard/StatCard";
 import Card from "@/components/ui/Card";
 import { useAuth } from "@/context/AuthContext";
 import AdminDashboard from "@/components/Dashboard/Roles/AdminDashboard";
-import FinanceManagerDashboard from "@/components/Dashboard/Roles/FinanceManagerDashboard";
 import FinanceUserDashboard from "@/components/Dashboard/Roles/FinanceUserDashboard";
-import AuditorDashboard from "@/components/Dashboard/Roles/AuditorDashboard";
+import ProjectManagerDashboard from "@/components/Dashboard/Roles/ProjectManagerDashboard";
 import VendorPortal from "@/components/Vendor/VendorPortal";
 import NotificationLog from "@/components/Workflow/NotificationLog";
 import { ROLES } from "@/constants/roles";
@@ -87,7 +86,7 @@ export default function DashboardPage() {
     const role = user.role;
 
     // 1. Full Access Roles
-    if ([ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER, ROLES.AUDITOR].includes(role)) {
+    if ([ROLES.ADMIN, ROLES.FINANCE_USER].includes(role)) {
       return true;
     }
 
@@ -300,12 +299,10 @@ export default function DashboardPage() {
         <VendorPortal onUploadClick={() => setIsUploadModalOpen(true)} />
       ) : user?.role === ROLES.ADMIN ? (
         <AdminDashboard />
-      ) : user?.role === ROLES.FINANCE_MANAGER ? (
-        <FinanceManagerDashboard invoices={invoices} />
       ) : user?.role === ROLES.FINANCE_USER ? (
         <FinanceUserDashboard invoices={invoices} onUploadComplete={handleUploadComplete} />
-      ) : user?.role === ROLES.AUDITOR ? (
-        <AuditorDashboard invoices={invoices} />
+      ) : user?.role === ROLES.PROJECT_MANAGER ? (
+        <ProjectManagerDashboard user={user} />
       ) : (
         <>
           {activeTab === 'analytics' ? (
@@ -385,7 +382,7 @@ export default function DashboardPage() {
                       {user?.role === ROLES.PROJECT_MANAGER && (
                         <button
                           onClick={() => {
-                            const to = prompt("Delegate PM authority to (e.g. Finance Manager):");
+                            const to = prompt("Delegate PM authority to (e.g. Finance User):");
                             if (to) alert(`Delegated to ${to}`);
                           }}
                           className="btn btn-sm btn-outline btn-primary w-full gap-3 mt-4"

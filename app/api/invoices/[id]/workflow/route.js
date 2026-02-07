@@ -35,6 +35,39 @@ export async function POST(request, { params }) {
 
     // State Machine (FR-5, FR-6)
     try {
+        if (action === 'PROCESS_MATCH') {
+            // Trigger 3-Way Check
+            if (![ROLES.ADMIN, ROLES.FINANCE_USER].includes(userRole)) {
+                return NextResponse.json({ error: 'Unauthorized to run matching.' }, { status: 403 });
+            }
+
+            const { matchingEngine } = await import('@/lib/matching');
+            const matchResult = await matchingEngine.performThreeWayMatch(invoice);
+
+            if (matchResult.status === 'MATCHED') {
+                nextStatus = 'VERIFIED';
+                auditLog.details = 'Automated 3-Way Match Successful';
+            } else {
+                nextStatus = 'MATCH_DISCREPANCY';
+                auditLog.details = `Matching Failed: ${matchResult.discrepancies.join(', ')}`;
+            }
+
+            // Save match details to invoice
+            await db.saveInvoice(id, {
+                status: nextStatus,
+                matching: matchResult,
+                updatedAt: new Date().toISOString()
+            });
+
+            // Notification
+            await sendStatusNotification({ ...invoice, status: nextStatus }, nextStatus);
+
+            return NextResponse.json({
+                message: `Matching complete. Status: ${nextStatus}`,
+                invoice: await db.getInvoice(id)
+            });
+        }
+
         if (action === 'APPROVE') {
             if (invoice.status === 'VERIFIED') {
                 // Project Manager Approval
@@ -45,23 +78,25 @@ export async function POST(request, { params }) {
                 timestampUpdates.pmApprovedAt = new Date().toISOString();
                 auditLog.details = `PM Approved: ${comments || 'No comments'}`;
             } else if (invoice.status === 'PENDING_APPROVAL') {
-                // Finance Manager Approval (Final Payment Release)
-                if (userRole !== ROLES.FINANCE_MANAGER && userRole !== ROLES.ADMIN) {
-                    return NextResponse.json({ error: 'Only a Finance Manager can release final payment.' }, { status: 403 });
+                // Finance Manager Release (Final Payment) - Note: In Role Removal, Admin or Finance User might take this
+                // But let's stick to remaining roles. Admin is safest fallback for "Final Release".
+                if (userRole !== ROLES.ADMIN) {
+                    // Assuming 'Finance Manager' role is gone, Admin handles final release for now
+                    return NextResponse.json({ error: 'Only Admin can release final payment.' }, { status: 403 });
                 }
                 nextStatus = 'PAID';
                 timestampUpdates.paidAt = new Date().toISOString();
-                auditLog.details = `Finance Released Payment: ${comments || 'No comments'}`;
+                auditLog.details = `Payment Released: ${comments || 'No comments'}`;
             } else if (invoice.status === 'MATCH_DISCREPANCY' || invoice.status === 'VALIDATION_REQUIRED') {
                 // Manual overrides for discrepancies
-                if (![ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.FINANCE_MANAGER].includes(userRole)) {
+                if (![ROLES.ADMIN, ROLES.FINANCE_USER].includes(userRole)) {
                     return NextResponse.json({ error: 'Unauthorized to resolve discrepancies.' }, { status: 403 });
                 }
                 nextStatus = 'VERIFIED';
                 auditLog.details = `Manual Override/Resolution: ${comments || 'No comments'}`;
             }
         } else if (action === 'REJECT') {
-            if (![ROLES.ADMIN, ROLES.PROJECT_MANAGER, ROLES.FINANCE_MANAGER, ROLES.FINANCE_USER].includes(userRole)) {
+            if (![ROLES.ADMIN, ROLES.PROJECT_MANAGER, ROLES.FINANCE_USER].includes(userRole)) {
                 return NextResponse.json({ error: 'Unauthorized to reject invoices.' }, { status: 403 });
             }
             nextStatus = 'REJECTED';
@@ -81,8 +116,7 @@ export async function POST(request, { params }) {
         });
 
         // Detailed Audit Trail entry
-        // We can use a direct SQL call or extending db.saveInvoice
-        // The saveInvoice already inserts into audit_trail, but let's make it more specific
+        // The saveInvoice already inserts into audit_trail via our CDC, but this specific workflow log is high-level "Action"
         await db.createAuditTrailEntry(auditLog);
 
         // Trigger simulated notification

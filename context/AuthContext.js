@@ -16,17 +16,31 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         const checkSession = async () => {
             try {
-                const res = await fetch('/api/auth/me');
+                const res = await fetch('/api/auth/me', {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
 
                 if (!res.ok) {
                     // Start fresh if auth check fails
+                    console.log("Auth checks failed:", res.status, res.statusText);
                     setUser(null);
                     return;
                 }
 
-                const data = await res.json();
-                if (data.user) {
-                    setUser(data.user);
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await res.json();
+                    if (data.user) {
+                        setUser(data.user);
+                    } else {
+                        setUser(null);
+                    }
+                } else {
+                    console.error("Received non-JSON response from /api/auth/me");
+                    setUser(null);
                 }
             } catch (error) {
                 console.error("Session check failed", error);

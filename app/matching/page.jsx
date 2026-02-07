@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import { ROLES } from "@/constants/roles";
 import { getAllInvoices } from "@/lib/api";
 import MatchingList from "@/components/Matching/MatchingList";
 import Icon from "@/components/Icon";
@@ -20,8 +23,20 @@ export default function MatchingPage() {
 }
 
 function MatchingPageContent() {
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        router.push("/login");
+      } else if (![ROLES.ADMIN, ROLES.FINANCE_USER, ROLES.PROJECT_MANAGER].includes(user.role)) {
+        router.push("/dashboard");
+      }
+    }
+  }, [user, authLoading, router]);
 
   const searchParams = useSearchParams();
   const statusFilter = searchParams.get('status');
