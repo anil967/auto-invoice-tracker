@@ -4,7 +4,33 @@
  */
 
 import { describe, test, expect, jest, beforeEach } from '@jest/globals';
-import { NextRequest } from 'next/server';
+
+// 0. Mock Next.js Server Objects (CRITICAL for App Router testing)
+jest.mock('next/server', () => {
+    return {
+        NextResponse: {
+            json: (data, options) => ({
+                status: options?.status || 200,
+                json: async () => data,
+                _data: data // helper for testing
+            })
+        },
+        NextRequest: class {
+            constructor(url, options = {}) {
+                this.url = url;
+                this.nextUrl = new URL(url);
+                this.method = options.method || 'GET';
+                this.headers = new Headers(options.headers || {});
+                this.body = options.body;
+            }
+            async json() {
+                return JSON.parse(this.body || '{}');
+            }
+        }
+    };
+});
+
+const { NextRequest } = require('next/server');
 
 // 1. Mock Authentication
 jest.mock('@/lib/auth', () => ({
