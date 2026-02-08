@@ -7,7 +7,9 @@ export const ROLES = {
     ADMIN: 'Admin',
     PROJECT_MANAGER: 'PM',
     FINANCE_USER: 'Finance User',
-    VENDOR: 'Vendor'
+    FINANCE_MANAGER: 'Finance Manager',
+    VENDOR: 'Vendor',
+    AUDITOR: 'Auditor'
 };
 
 export const MENU_PERMISSIONS = {

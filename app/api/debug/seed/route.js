@@ -146,8 +146,54 @@ export async function GET() {
 
         await Promise.all(annexures.map(ax => db.createAnnexure(ax)));
 
-
-
+        // 4. Seed sample invoices (so they appear in dashboard, vendor portal, etc.)
+        const sampleInvoices = [
+            {
+                id: 'INV-SEED001',
+                vendorName: 'Acme Solutions',
+                submittedByUserId: 'u-vendor-01',
+                originalName: 'Invoice_Acme_Jan2026.pdf',
+                receivedAt: new Date().toISOString(),
+                invoiceNumber: 'INV-2026-001',
+                date: '2026-02-01',
+                amount: 50000,
+                status: 'VERIFIED',
+                project: 'Project Alpha',
+                poNumber: 'PO-2026-001',
+                matching: { isMatched: true }
+            },
+            {
+                id: 'INV-SEED002',
+                vendorName: 'Global Tech Inc',
+                submittedByUserId: 'u-finance-01',
+                originalName: 'Invoice_GlobalTech_Feb.pdf',
+                receivedAt: new Date().toISOString(),
+                invoiceNumber: 'INV-2026-002',
+                date: '2026-02-05',
+                amount: 125000,
+                status: 'PENDING_APPROVAL',
+                project: 'Cloud Migration',
+                poNumber: 'PO-2026-002',
+                matching: { isMatched: true }
+            },
+            {
+                id: 'INV-SEED003',
+                vendorName: 'Acme Solutions',
+                submittedByUserId: 'u-vendor-01',
+                originalName: 'Invoice_Acme_Feb2026.pdf',
+                receivedAt: new Date().toISOString(),
+                invoiceNumber: 'INV-2026-003',
+                date: '2026-02-07',
+                amount: 25000,
+                status: 'RECEIVED',
+                project: 'Project Alpha',
+                poNumber: 'PO-2026-001',
+                matching: { isMatched: false }
+            }
+        ];
+        for (const inv of sampleInvoices) {
+            await db.saveInvoice(inv.id, inv);
+        }
 
         console.log("[Seed] ERP Data Seed Completed.");
 
@@ -157,7 +203,8 @@ export async function GET() {
                 users: users.length,
                 vendors: vendors.length,
                 pos: pos.length,
-                annexures: annexures.length
+                annexures: annexures.length,
+                invoices: sampleInvoices.length
             }
         });
 
