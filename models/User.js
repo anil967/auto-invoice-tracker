@@ -16,9 +16,8 @@ const UserSchema = new mongoose.Schema({
     department: { type: String },
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
-// Indexes for efficient queries
+// Indexes for efficient queries (email already indexed via unique: true)
 UserSchema.index({ role: 1, isActive: 1 });
-UserSchema.index({ email: 1 });
 
 export default mongoose.models.User || mongoose.model('User', UserSchema);
 

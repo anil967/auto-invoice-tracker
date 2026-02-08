@@ -40,7 +40,7 @@ export default function VendorPortal() {
             return;
         }
         fetchSubmissions();
-        const interval = setInterval(fetchSubmissions, 5000); // Poll every 5s; immediate refetch still on upload
+        const interval = setInterval(fetchSubmissions, 10000); // Poll every 10s to keep UI smooth; refetch on upload
         return () => clearInterval(interval);
     }, [user, authLoading, router, fetchSubmissions]);
 
@@ -70,6 +70,8 @@ export default function VendorPortal() {
     };
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [viewerInvoiceId, setViewerInvoiceId] = useState(null);
+    const [viewerLoading, setViewerLoading] = useState(true);
 
     const handleDownloadCSV = () => {
         if (allSubmissions.length === 0) {
@@ -327,11 +329,11 @@ export default function VendorPortal() {
                                                 {allSubmissions.slice(0, 10).map((inv, idx) => (
                                                     <motion.tr
                                                         key={inv.id}
-                                                        initial={{ opacity: 0, y: 10 }}
+                                                        initial={{ opacity: 0, y: 6 }}
                                                         animate={{ opacity: 1, y: 0 }}
-                                                        exit={{ opacity: 0, scale: 0.95 }}
-                                                        transition={{ delay: idx * 0.05 }}
-                                                        className="group hover:bg-slate-50/80 transition-all cursor-default"
+                                                        exit={{ opacity: 0, scale: 0.98 }}
+                                                        transition={{ duration: 0.2, delay: idx * 0.02 }}
+                                                        className="group hover:bg-slate-50/80 transition-colors cursor-default"
                                                     >
                                                         <td className="px-10 py-6">
                                                             <div className="flex items-center gap-4">
@@ -362,7 +364,12 @@ export default function VendorPortal() {
                                                             </span>
                                                         </td>
                                                         <td className="px-10 py-6 text-right border-l border-slate-50">
-                                                            <button className="p-2 text-slate-300 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { setViewerInvoiceId(inv.id); setViewerLoading(true); }}
+                                                                className="p-2 text-slate-300 hover:text-teal-600 hover:bg-teal-50 rounded-lg transition-all"
+                                                                title="View document"
+                                                            >
                                                                 <Icon name="ExternalLink" size={18} />
                                                             </button>
                                                         </td>
@@ -390,6 +397,56 @@ export default function VendorPortal() {
                     <Icon name="LifeBuoy" size={24} className="group-hover:rotate-45 transition-transform" />
                 </button>
             </div>
+
+            {/* Document viewer modal - same tab popup with close */}
+            <AnimatePresence>
+                {viewerInvoiceId && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+                            onClick={() => setViewerInvoiceId(null)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.98 }}
+                            transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+                            className="relative bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden z-[101] flex flex-col max-h-[90vh]"
+                        >
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50/80 shrink-0">
+                                <span className="font-bold text-slate-800 text-sm truncate">
+                                    {allSubmissions.find(i => i.id === viewerInvoiceId)?.originalName || `Invoice ${viewerInvoiceId}`}
+                                </span>
+                                <button
+                                    type="button"
+                                    onClick={() => setViewerInvoiceId(null)}
+                                    className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-200 transition-colors"
+                                    title="Close"
+                                >
+                                    <Icon name="X" size={22} />
+                                </button>
+                            </div>
+                            <div className="flex-1 min-h-0 bg-slate-100 relative min-h-[70vh]">
+                                {viewerLoading && (
+                                    <div className="absolute inset-0 flex items-center justify-center bg-slate-100 z-10">
+                                        <span className="loading loading-spinner loading-lg text-teal-600"></span>
+                                    </div>
+                                )}
+                                <iframe
+                                    src={`/api/invoices/${viewerInvoiceId}/file`}
+                                    title="Invoice document"
+                                    className="w-full h-full min-h-[70vh] border-0"
+                                    onLoad={() => setViewerLoading(false)}
+                                />
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* Settings Modal - Custom Overlay */}
             <AnimatePresence>

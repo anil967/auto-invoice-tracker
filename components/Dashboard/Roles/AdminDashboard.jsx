@@ -89,10 +89,12 @@ const AdminDashboard = ({ invoices = [], onRefresh }) => {
 
             {/* Recent Invoices - collapsible open/close */}
             <Card className="p-0 overflow-hidden rounded-2xl border border-slate-100 shadow-sm">
-                <button
-                    type="button"
+                <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setRecentInvoicesOpen((o) => !o)}
-                    className="w-full p-4 flex justify-between items-center bg-slate-50/80 hover:bg-slate-100/80 transition-colors text-left border-b border-slate-100"
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setRecentInvoicesOpen((o) => !o); } }}
+                    className="w-full p-4 flex justify-between items-center bg-slate-50/80 hover:bg-slate-100/80 transition-colors text-left border-b border-slate-100 cursor-pointer"
                 >
                     <div className="flex items-center gap-3">
                         <motion.span
@@ -118,7 +120,7 @@ const AdminDashboard = ({ invoices = [], onRefresh }) => {
                             <Icon name="RefreshCw" size={14} /> Refresh
                         </button>
                     )}
-                </button>
+                </div>
                 <AnimatePresence initial={false}>
                     {recentInvoicesOpen && (
                         <motion.div
