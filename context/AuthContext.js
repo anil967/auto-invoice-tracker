@@ -17,6 +17,7 @@ export const AuthProvider = ({ children }) => {
         const checkSession = async () => {
             try {
                 const res = await fetch('/api/auth/me', {
+                    credentials: 'include',
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache'
@@ -65,6 +66,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email, password }),
             });
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }) => {
         try {
             const res = await fetch('/api/auth/signup', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password, role }),
             });
@@ -112,7 +115,7 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await fetch('/api/auth/logout', { method: 'POST' });
+            await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
             setUser(null);
             router.push("/login");
         } catch (error) {
