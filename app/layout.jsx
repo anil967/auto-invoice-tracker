@@ -28,7 +28,10 @@ export default function RootLayout({ children }) {
             </GlassLayout>
           </Providers>
         </ErrorBoundary>
-        <Script src="https://subtle-druid-430b16.netlify.app/codemate-badge.js" />
+        <Script
+          src="https://subtle-druid-430b16.netlify.app/codemate-badge.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

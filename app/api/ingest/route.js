@@ -52,7 +52,10 @@ export async function POST(request) {
         if (result.success) {
             await db.saveInvoice(invoiceId, {
                 ...result.data,
-                fileUrl: fileUrl, // Use the Data URI
+                // Preserve vendor identity – IDP may overwrite with mock data
+                submittedByUserId: invoiceMetadata.submittedByUserId,
+                vendorName: invoiceMetadata.vendorName,
+                fileUrl: fileUrl,
                 validation: result.validation,
                 matching: result.matching,
                 status: (result.validation.isValid && result.matching?.isMatched) ? 'VERIFIED' :

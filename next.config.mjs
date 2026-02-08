@@ -79,13 +79,12 @@ const nextConfig = {
         ],
       },
       {
-        // Cache API responses for 1 minute (EXCEPT version/health)
-        source: '/api/((?!version|health).*)',
+        // Never cache API responses – data must stay fresh for invoices, users, etc.
+        source: '/api/:path*',
         headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, s-maxage=60, stale-while-revalidate=120',
-          },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate, proxy-revalidate' },
+          { key: 'Pragma', value: 'no-cache' },
+          { key: 'Expires', value: '0' },
         ],
       },
       {

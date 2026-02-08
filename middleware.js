@@ -63,14 +63,15 @@ export async function middleware(request) {
             }
         } catch (e) {
             console.error("Middleware session decryption failed", e);
-            // If session is invalid, clear it and redirect if not public
-            if (!isPublicRoute && !pathname.includes('.')) {
+            // If session is invalid, clear it and redirect if not public (skip API routes – they return 401)
+            if (!pathname.startsWith('/api/') && !isPublicRoute && !pathname.includes('.')) {
                 const redirect = NextResponse.redirect(new URL('/login', request.url));
-                redirect.cookies.set('session', '', { expires: new Date(0) });
+                redirect.cookies.set('session', '', { expires: new Date(0), path: '/' });
                 return redirect;
             }
         }
-    } else if (!isPublicRoute && !pathname.includes('.')) {
+    } else if (!pathname.startsWith('/api/') && !isPublicRoute && !pathname.includes('.')) {
+        // Only redirect page requests; let API routes return 401 JSON
         return NextResponse.redirect(new URL('/login', request.url));
     }
 

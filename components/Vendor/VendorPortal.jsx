@@ -28,7 +28,7 @@ const VendorPortal = ({ onUploadClick }) => {
         };
 
         if (user || !user) fetchInvoices(); // Allow demo flow
-        const interval = setInterval(fetchInvoices, 5000);
+        const interval = setInterval(fetchInvoices, 2000);
         return () => clearInterval(interval);
     }, [user]);
 

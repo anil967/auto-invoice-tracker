@@ -20,16 +20,19 @@ const GlassLayout = ({ children }) => {
           {children}
         </main>
       ) : isVendorPage ? (
-        // Vendor page: full width, no sidebar (vendor has its own nav)
-        <div className="w-full h-screen overflow-hidden flex flex-col">
-          <div className="pt-6 px-6 pb-0 flex-1 flex flex-col min-h-0">
-            <div className="glass-panel rounded-t-3xl h-[calc(100vh-1.5rem)] flex flex-col backdrop-blur-lg border-b-0 flex-1 min-h-0">
-              <Navbar />
-              <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar scroll-smooth">
-                {children}
+        // Vendor page: sidebar + main content (same layout as app)
+        <div className="flex w-full h-screen overflow-hidden">
+          <Sidebar />
+          <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+            <div className="pt-6 px-6 pb-0">
+              <div className="glass-panel rounded-t-3xl h-[calc(100vh-1.5rem)] flex flex-col backdrop-blur-lg border-b-0">
+                <Navbar />
+                <div className="flex-1 overflow-y-auto p-6 md:p-8 custom-scrollbar scroll-smooth">
+                  {children}
+                </div>
               </div>
             </div>
-          </div>
+          </main>
         </div>
       ) : (
         // App layout: sidebar + main content

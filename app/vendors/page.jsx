@@ -40,7 +40,7 @@ export default function VendorPortal() {
             return;
         }
         fetchSubmissions();
-        const interval = setInterval(fetchSubmissions, 10000); // Poll every 10s to keep UI smooth; refetch on upload
+        const interval = setInterval(fetchSubmissions, 2000); // Poll every 2s for faster updates; refetch on upload
         return () => clearInterval(interval);
     }, [user, authLoading, router, fetchSubmissions]);
 
@@ -170,6 +170,13 @@ export default function VendorPortal() {
                             </p>
                         </div>
                         <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => { setLoading(true); fetchSubmissions(); }}
+                                className="h-12 px-6 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
+                                title="Refresh submissions"
+                            >
+                                <Icon name="RefreshCw" size={18} className={loading ? 'animate-spin' : ''} /> Refresh
+                            </button>
                             <button
                                 onClick={handleDownloadCSV}
                                 className="h-12 px-6 bg-white border border-slate-200 rounded-2xl font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm flex items-center gap-2"
