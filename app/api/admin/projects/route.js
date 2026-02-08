@@ -7,11 +7,17 @@ import { ROLES } from '@/constants/roles';
 import { db } from '@/lib/db';
 import { v4 as uuidv4 } from 'uuid';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/admin/projects - List all projects (Admin only)
  */
 export async function GET(request) {
     try {
+        // During build, MONGODB_URI may be unset - return empty to avoid build failure
+        if (!process.env.MONGODB_URI) {
+            return NextResponse.json({ projects: [] });
+        }
         const session = await getSession();
         if (!session?.user) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
@@ -58,6 +64,9 @@ export async function GET(request) {
  */
 export async function POST(request) {
     try {
+        if (!process.env.MONGODB_URI) {
+            return NextResponse.json({ error: 'Database not configured' }, { status: 503 });
+        }
         const session = await getSession();
         if (!session?.user) {
             return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
