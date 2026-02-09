@@ -14,6 +14,8 @@ import clsx from "clsx";
 export default function VendorPortal() {
     const router = useRouter();
     const { user, logout, isLoading: authLoading } = useAuth();
+    const logoutRef = useRef(logout);
+    logoutRef.current = logout;
     const [allSubmissions, setAllSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const fetchIdRef = useRef(0);
@@ -22,13 +24,13 @@ export default function VendorPortal() {
         const thisFetchId = ++fetchIdRef.current;
         try {
             const data = await getAllInvoices();
-            // Only apply if this is still the latest fetch (prevents stale poll from removing submission)
             if (thisFetchId !== fetchIdRef.current) return;
             setAllSubmissions(Array.isArray(data) ? data : []);
         } catch (e) {
             console.error("Failed to fetch vendor submissions", e);
             if (thisFetchId !== fetchIdRef.current) return;
-            // Don't clear list on error – keep showing current submissions
+            if (e?.message === 'Unauthorized') logoutRef.current?.();
+            // Don't clear list on other errors – keep showing current submissions
         } finally {
             if (thisFetchId === fetchIdRef.current) setLoading(false);
         }
@@ -55,6 +57,8 @@ export default function VendorPortal() {
     const handleUploadComplete = useCallback(() => {
         setLoading(true);
         fetchSubmissions();
+        // Refetch again after a short delay so the new invoice is visible (DB write + any processing)
+        setTimeout(fetchSubmissions, 800);
     }, [fetchSubmissions]);
 
     const getStatusStyle = (status) => {

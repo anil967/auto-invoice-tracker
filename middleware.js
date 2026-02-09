@@ -48,10 +48,22 @@ export async function middleware(request) {
     // Auth protection & Role Header Injection
     if (sessionCookie) {
         try {
-            // Decrypt session to get role
             const { decrypt } = await import('@/lib/auth');
             const session = await decrypt(sessionCookie.value);
-            const userRole = session.user.role;
+            const userRole = session?.user?.role;
+
+            // Invalid or expired session (decrypt returns null or payload has no user)
+            if (!userRole) {
+                const clearCookie = (res) => {
+                    res.cookies.set('session', '', { expires: new Date(0), path: '/' });
+                    return res;
+                };
+                if (!pathname.startsWith('/api/') && !isPublicRoute && !pathname.includes('.')) {
+                    return clearCookie(NextResponse.redirect(new URL('/login', request.url)));
+                }
+                clearCookie(response);
+                return response;
+            }
 
             // Set role header for internal API use
             response.headers.set('x-user-role', userRole);
@@ -63,12 +75,15 @@ export async function middleware(request) {
             }
         } catch (e) {
             console.error("Middleware session decryption failed", e);
-            // If session is invalid, clear it and redirect if not public (skip API routes – they return 401)
+            const clearCookie = (res) => {
+                res.cookies.set('session', '', { expires: new Date(0), path: '/' });
+                return res;
+            };
             if (!pathname.startsWith('/api/') && !isPublicRoute && !pathname.includes('.')) {
-                const redirect = NextResponse.redirect(new URL('/login', request.url));
-                redirect.cookies.set('session', '', { expires: new Date(0), path: '/' });
-                return redirect;
+                return clearCookie(NextResponse.redirect(new URL('/login', request.url)));
             }
+            clearCookie(response);
+            return response;
         }
     } else if (!pathname.startsWith('/api/') && !isPublicRoute && !pathname.includes('.')) {
         // Only redirect page requests; let API routes return 401 JSON

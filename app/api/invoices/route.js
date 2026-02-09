@@ -16,9 +16,15 @@ export async function GET() {
         }
 
         const invoices = await db.getInvoices(user);
-        return NextResponse.json(invoices.sort((a, b) =>
+        const sorted = invoices.sort((a, b) =>
             new Date(b.receivedAt || b.updatedAt || b.created_at) - new Date(a.receivedAt || a.updatedAt || a.created_at)
-        ));
+        );
+        return NextResponse.json(sorted, {
+            headers: {
+                'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+                'Pragma': 'no-cache',
+            },
+        });
     } catch (error) {
         console.error('Error fetching invoices:', error);
         return NextResponse.json(

@@ -53,12 +53,17 @@ export const AuthProvider = ({ children }) => {
 
         checkSession();
 
-        // Check version IMMEDIATELY to prevent "old page" flash
-        autoUpdateOnVersionChange();
+        // Defer first version check so fetch has a valid origin (avoids "Failed to fetch" on fast load)
+        const versionCheckTimer = setTimeout(() => {
+            autoUpdateOnVersionChange();
+        }, 1500);
 
         // Continue periodic checks
         const cleanup = startVersionCheck(60000); // Check every 1 minute
-        return cleanup;
+        return () => {
+            clearTimeout(versionCheckTimer);
+            cleanup?.();
+        };
     }, []);
 
     const login = async (email, password) => {

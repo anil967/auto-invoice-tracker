@@ -61,8 +61,16 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {error && (
-                            <div className="bg-error/10 text-error text-sm p-3 rounded-xl text-center font-medium">
-                                {error}
+                            <div className="bg-error/10 text-error text-sm p-3 rounded-xl text-center font-medium space-y-2">
+                                <p>{error}</p>
+                                {error === "No account found with this email address" && (
+                                    <p className="text-gray-600">
+                                        <Link href="/signup" className="text-primary font-bold hover:underline">
+                                            Create an account
+                                        </Link>{" "}
+                                        to get started.
+                                    </p>
+                                )}
                             </div>
                         )}
 
