@@ -106,8 +106,10 @@ export default function ConfigurationPage() {
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
                         System Configuration
                     </h1>
-                    <p className="text-gray-500 mt-2">Manage global system settings and integrations</p>
+                    <p className="text-gray-500 mt-2">Application settings, integrations, and system preferences</p>
                 </div>
+            </div>
+            <div className="flex justify-end mb-8">
                 <button
                     onClick={handleSave}
                     disabled={saving || loading}

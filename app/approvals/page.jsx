@@ -8,6 +8,7 @@ import { getAllInvoices } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Icon from "@/components/Icon";
+import PageHeader from "@/components/Layout/PageHeader";
 
 export default function ApprovalsPage() {
   const router = useRouter();
@@ -54,32 +55,19 @@ export default function ApprovalsPage() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-full pb-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg text-amber-600">
-              <Icon name="Stamp" size={28} />
-            </div>
-            Admin Approval Workflow
-          </h1>
-          <p className="text-gray-500 mt-2 ml-14 max-w-xl">
-            Pending invoices requiring managerial review and final sign-off. Vendor submissions appear here for review.
-          </p>
-        </motion.div>
-
-        <div className="flex gap-2">
-          <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
-            <Icon name="Filter" size={16} /> Filter
-          </button>
-          <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
-            <Icon name="SortDesc" size={16} /> Sort
-          </button>
-        </div>
+      <PageHeader
+        title="Admin Approval Workflow"
+        subtitle="Pending invoices requiring managerial review and final sign-off. Vendor submissions appear here for review."
+        icon="Stamp"
+        accent="amber"
+      />
+      <div className="flex gap-2 justify-end">
+        <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
+          <Icon name="Filter" size={16} /> Filter
+        </button>
+        <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
+          <Icon name="SortDesc" size={16} /> Sort
+        </button>
       </div>
 
       {/* Main Content */}

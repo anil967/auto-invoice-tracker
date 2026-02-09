@@ -63,7 +63,6 @@ export default function AuditLogPage() {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">

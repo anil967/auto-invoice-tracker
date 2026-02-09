@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "sonner";
 import Icon from "@/components/Icon";
 import { ROLES } from "@/constants/roles";
+import PageHeader from "@/components/Layout/PageHeader";
 
 export default function UserManagementPage() {
     const [users, setUsers] = useState([]);
@@ -126,22 +127,21 @@ export default function UserManagementPage() {
 
     return (
         <div className="p-8 max-w-7xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
-                        User Management
-                    </h1>
-                    <p className="text-gray-500 mt-2">Create, modify, and deactivate user accounts</p>
-                </div>
-                <button
-                    onClick={handleAdd}
-                    className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-hover transition-all"
-                >
-                    <Icon name="UserPlus" size={20} />
-                    Add User
-                </button>
-            </div>
+            <PageHeader
+                title="User Management"
+                subtitle="Create, modify, and deactivate user accounts"
+                icon="Users"
+                accent="purple"
+                actions={
+                    <button
+                        onClick={handleAdd}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-hover transition-all"
+                    >
+                        <Icon name="UserPlus" size={20} />
+                        Add User
+                    </button>
+                }
+            />
 
             {/* Filters */}
             <div className="bg-white/80 backdrop-blur-xl rounded-2xl border border-white/20 shadow-lg p-4 mb-6">

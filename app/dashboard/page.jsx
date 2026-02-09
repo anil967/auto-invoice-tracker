@@ -19,6 +19,7 @@ import VendorPortal from "@/components/Vendor/VendorPortal";
 import NotificationLog from "@/components/Workflow/NotificationLog";
 import { ROLES } from "@/constants/roles";
 import { formatCurrency } from "@/utils/format";
+import PageHeader from "@/components/Layout/PageHeader";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -148,152 +149,76 @@ export default function DashboardPage() {
     );
   }
 
+  const isAdmin = user?.role === ROLES.ADMIN;
+  const dashboardActions = !isAdmin && user?.role !== ROLES.VENDOR ? (
+    <>
+      <div className="hidden xl:flex bg-slate-100/60 p-1 rounded-xl border border-slate-200/60 items-center">
+        <button
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === "overview" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+          onClick={() => setActiveTab("overview")}
+        >
+          <Icon name="BarChart2" size={13} /> Overview
+        </button>
+        <button
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === "analytics" ? "bg-white text-indigo-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+          onClick={() => setActiveTab("analytics")}
+        >
+          <Icon name="PieChart" size={13} /> Analytics
+        </button>
+      </div>
+      <div className="h-8 w-px bg-slate-200 hidden xl:block" />
+      <div className="flex items-center gap-2">
+        <RoleSwitcher />
+        <button
+          onClick={() => setIsUploadModalOpen(true)}
+          className="flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all whitespace-nowrap"
+        >
+          <Icon name="Plus" size={15} /> <span className="hidden lg:inline">New Invoice</span><span className="lg:hidden">New</span>
+        </button>
+        <button
+          onClick={handleExportCSV}
+          className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all"
+          title="Export CSV"
+        >
+          <Icon name="Download" size={17} />
+        </button>
+        <div className="dropdown dropdown-end">
+          <label tabIndex={0} className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer">
+            <Icon name="Filter" size={16} />
+          </label>
+          <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-2xl w-56 border border-slate-100 mt-2">
+            <div className="px-4 py-2 border-b border-slate-50 mb-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Filter by Status</p>
+            </div>
+            <li><a onClick={() => setStatusFilter("ALL")} className="text-xs font-bold text-slate-600 py-2">All Invoices</a></li>
+            <li><a onClick={() => setStatusFilter("PENDING_APPROVAL")} className="text-xs font-bold text-amber-600 py-2">Pending Approval</a></li>
+            <li><a onClick={() => setStatusFilter("PAID")} className="text-xs font-bold text-emerald-600 py-2">Paid</a></li>
+            <li><a onClick={() => setStatusFilter("MATCH_DISCREPANCY")} className="text-xs font-bold text-rose-600 py-2">Discrepancies</a></li>
+          </ul>
+        </div>
+      </div>
+    </>
+  ) : null;
+
   return (
     <div className="pb-10">
-      {/* Role-Aware Header */}
       {user?.role === ROLES.ADMIN ? (
-        /* Clean Admin Header */
-        <header className="bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 px-6 rounded-t-3xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl shadow-lg shadow-purple-500/20">
-                <Icon name="Shield" className="text-white w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-black text-slate-800 tracking-tight">
-                  Admin <span className="text-purple-600">Control Center</span>
-                </h1>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">
-                  System administration & governance
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-sm font-bold text-slate-800">{user?.name}</p>
-                <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
-                  Administrator
-                </span>
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-md flex items-center justify-center text-white font-bold">
-                {user?.name?.charAt(0) || 'A'}
-              </div>
-              <button
-                onClick={logout}
-                className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"
-                title="Sign Out"
-              >
-                <Icon name="LogOut" size={18} />
-              </button>
-            </div>
-          </div>
-        </header>
-      ) : (
-        /* Standard Header for Other Roles */
-        <header className="sticky top-0 z-40 bg-white border-b border-slate-200/80 shadow-sm py-4 mb-6 px-6 rounded-t-3xl transition-all">
-          <div className="flex flex-row items-center justify-between gap-3 lg:gap-6">
-
-            {/* Left: Title & Context */}
-            <div className="flex items-center gap-3 shrink-0 min-w-0">
-              <div className="p-2 bg-indigo-600 rounded-lg shadow-lg shadow-indigo-600/20 hidden md:flex shrink-0">
-                <Icon name="LayoutDashboard" className="text-white w-5 h-5" />
-              </div>
-              <div className="min-w-0">
-                <h1 className="text-xl md:text-2xl font-black text-slate-800 tracking-tight leading-none">
-                  Financial <span className="text-indigo-600">Command</span>
-                </h1>
-                <p className="hidden md:block text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                  Real-time Control
-                </p>
-              </div>
-            </div>
-
-            {/* Right: Controls & Profile */}
-            <div className="flex items-center gap-2 lg:gap-3">
-
-              {/* View Toggles - Hidden on mobile, visible on lg+ */}
-              {user?.role !== ROLES.VENDOR && (
-                <div className="hidden xl:flex bg-slate-100/60 p-1 rounded-xl border border-slate-200/60 items-center">
-                  <button
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'overview' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                    onClick={() => setActiveTab("overview")}
-                  >
-                    <Icon name="BarChart2" size={13} /> Overview
-                  </button>
-                  <button
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${activeTab === 'analytics' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                    onClick={() => setActiveTab("analytics")}
-                  >
-                    <Icon name="PieChart" size={13} /> Analytics
-                  </button>
-                </div>
-              )}
-
-              <div className="h-8 w-px bg-slate-200 hidden xl:block"></div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-2">
-                <RoleSwitcher />
-
-                <button
-                  onClick={() => setIsUploadModalOpen(true)}
-                  className="flex items-center gap-2 h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] font-black uppercase tracking-widest rounded-xl shadow-md shadow-indigo-500/20 hover:shadow-indigo-500/30 active:scale-95 transition-all whitespace-nowrap"
-                >
-                  <Icon name="Plus" size={15} /> <span className="hidden lg:inline">New Invoice</span><span className="lg:hidden">New</span>
-                </button>
-
-                <button
-                  onClick={handleExportCSV}
-                  className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all"
-                  title="Export CSV"
-                >
-                  <Icon name="Download" size={17} />
-                </button>
-
-                <div className="dropdown dropdown-end">
-                  <label tabIndex={0} className="h-10 w-10 flex items-center justify-center bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer">
-                    <Icon name="Filter" size={16} />
-                  </label>
-                  <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow-xl bg-white rounded-2xl w-56 border border-slate-100 mt-2">
-                    <div className="px-4 py-2 border-b border-slate-50 mb-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Filter by Status</p>
-                    </div>
-                    <li><a onClick={() => setStatusFilter("ALL")} className="text-xs font-bold text-slate-600 py-2">All Invoices</a></li>
-                    <li><a onClick={() => setStatusFilter("PENDING_APPROVAL")} className="text-xs font-bold text-amber-600 py-2">Pending Approval</a></li>
-                    <li><a onClick={() => setStatusFilter("PAID")} className="text-xs font-bold text-emerald-600 py-2">Paid</a></li>
-                    <li><a onClick={() => setStatusFilter("MATCH_DISCREPANCY")} className="text-xs font-bold text-rose-600 py-2">Discrepancies</a></li>
-                  </ul>
-                </div>
-              </div>
-
-              <div className="h-8 w-px bg-slate-200 hidden lg:block"></div>
-
-              {/* User Profile */}
-              <div className="flex items-center gap-2.5 group cursor-pointer relative" title="View Profile">
-                <div className="text-right hidden sm:block leading-tight">
-                  <p className="text-xs font-bold text-slate-800">{user?.name || 'User'}</p>
-                  <span className="text-[9px] font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-full uppercase tracking-wider inline-block">
-                    {user?.role || 'Guest'}
-                  </span>
-                </div>
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md flex items-center justify-center text-white ring-2 ring-white group-hover:ring-indigo-100 transition-all">
-                  <span className="font-bold text-xs">{user?.name?.charAt(0) || 'U'}</span>
-                </div>
-
-                <button
-                  onClick={logout}
-                  className="absolute -bottom-1 -right-1 w-4 h-4 bg-white text-slate-400 rounded-full shadow-sm border border-slate-100 flex items-center justify-center hover:text-rose-500 hover:border-rose-100 transition-colors"
-                  title="Sign Out"
-                >
-                  <Icon name="LogOut" size={8} />
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </header>
-      )}
+        <PageHeader
+          title="Admin Control Center"
+          subtitle="System administration & governance"
+          icon="Shield"
+          accent="purple"
+          roleLabel="Administrator"
+        />
+      ) : user?.role !== ROLES.VENDOR ? (
+        <PageHeader
+          title="Financial Command"
+          subtitle="Real-time Control"
+          icon="LayoutDashboard"
+          accent="indigo"
+          actions={dashboardActions}
+        />
+      ) : null}
 
       {user?.role === ROLES.VENDOR ? (
         <VendorPortal onUploadClick={() => setIsUploadModalOpen(true)} />

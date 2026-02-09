@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import Icon from "@/components/Icon";
@@ -10,40 +10,62 @@ const DropZone = ({ onUploadComplete }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const progressCancelRef = useRef(false);
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return;
 
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
     setUploadSuccess(false);
 
+    const total = acceptedFiles.length;
+
+    const runSmoothProgress = (fromPercent, toPercent, durationMs = 1000) => {
+      progressCancelRef.current = false;
+      const start = Date.now();
+      const tick = () => {
+        if (progressCancelRef.current) return;
+        const elapsed = Date.now() - start;
+        const t = Math.min(elapsed / durationMs, 1);
+        const eased = t * (2 - t);
+        const value = fromPercent + (toPercent - fromPercent) * eased;
+        setUploadProgress((p) => Math.max(p, Math.round(value)));
+        if (t < 1) setTimeout(tick, 60);
+      };
+      tick();
+    };
+
     try {
-      // Step through files
-      for (let i = 0; i < acceptedFiles.length; i++) {
+      for (let i = 0; i < total; i++) {
         const file = acceptedFiles[i];
+        const segmentStart = 5 + (i / total) * 85;
+        const segmentEnd = 5 + ((i + 1) / total) * 85;
+        setUploadProgress(Math.round(segmentStart));
 
-        // Update progress based on file count
-        setUploadProgress(Math.round(((i) / acceptedFiles.length) * 100) + 10);
+        const uploadPromise = ingestInvoice(file);
+        runSmoothProgress(segmentStart, segmentEnd - 1, 1500);
+        await uploadPromise;
 
-        await ingestInvoice(file);
-        // The backend handles saving and initial status
+        progressCancelRef.current = true;
+        setUploadProgress(Math.round(segmentEnd));
       }
 
+      progressCancelRef.current = true;
+      runSmoothProgress(90, 100, 500);
+      await new Promise((r) => setTimeout(r, 500));
       setUploadProgress(100);
       setUploadSuccess(true);
 
-      // Notify parent immediately so list/stats can refetch and detect the new submission
       if (onUploadComplete) onUploadComplete();
 
-      // Reset after success animation
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
         setUploadSuccess(false);
       }, 1500);
-
     } catch (error) {
+      progressCancelRef.current = true;
       console.error("Upload failed:", error);
       alert(`Upload failed: ${error.message}`);
       setIsUploading(false);
@@ -95,7 +117,7 @@ const DropZone = ({ onUploadComplete }) => {
                   >
                     <Icon name="Check" size={40} className="text-success" />
                   </motion.div>
-                  <h3 className="text-xl font-bold text-gray-700">Upload Complete!</h3>
+                  <h3 className="text-xl font-bold text-gray-700">Uploaded!</h3>
                   <p className="text-gray-500">Processing your invoices...</p>
                 </div>
               ) : (
@@ -104,14 +126,15 @@ const DropZone = ({ onUploadComplete }) => {
                     <Icon name="UploadCloud" size={32} className="text-primary" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-700 mb-2">Uploading Files...</h3>
-                  <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden">
                     <motion.div
-                      className="h-full bg-primary"
+                      className="h-full bg-primary rounded-full"
                       initial={{ width: 0 }}
-                      animate={{ width: `${uploadProgress}%` }}
+                      animate={{ width: `${Math.min(100, uploadProgress)}%` }}
+                      transition={{ type: "tween", duration: 0.35 }}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 mt-2">{uploadProgress}%</p>
+                  <p className="text-xs text-gray-500 mt-2">{Math.min(100, Math.round(uploadProgress))}%</p>
                 </div>
               )}
             </motion.div>

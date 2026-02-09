@@ -7,8 +7,6 @@ import { ROLES } from "@/constants/roles";
 import { getAllInvoices } from "@/lib/api";
 import MatchingList from "@/components/Matching/MatchingList";
 import Icon from "@/components/Icon";
-import { motion } from "framer-motion";
-
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
@@ -67,13 +65,8 @@ function MatchingPageContent() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-full">
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
             <div className="p-2 bg-blue-500/10 rounded-lg text-blue-600">
               <Icon name="GitMerge" size={28} />
@@ -83,8 +76,7 @@ function MatchingPageContent() {
           <p className="text-gray-500 mt-2 ml-14 max-w-xl">
             Resolve discrepancies and validate invoices against Purchase Orders and Goods Receipts.
           </p>
-        </motion.div>
-
+        </div>
         <div className="flex gap-2">
           <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
             <Icon name="Filter" size={16} /> Filter

@@ -9,6 +9,7 @@ import clsx from "clsx";
 import { APP_VERSION } from "@/lib/version";
 import { useAuth } from "@/context/AuthContext";
 import { canSeeMenuItem } from "@/constants/roles";
+import { useRouter } from "next/navigation";
 
 const SIDEBAR_COLLAPSED_KEY = "invoiceflow-sidebar-collapsed";
 
@@ -26,7 +27,8 @@ const menuItems = [
 
 const Sidebar = () => {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
@@ -57,11 +59,11 @@ const Sidebar = () => {
     >
       <div className="glass-panel h-full rounded-3xl flex flex-col justify-between overflow-hidden p-3 relative border border-white/20 shadow-xl">
 
-        {/* Brand + Toggle */}
-        <div className={clsx("mb-4", collapsed ? "flex flex-col items-center gap-2" : "flex items-center justify-between gap-2 px-2")}>
+        {/* Brand + Toggle — fixed at top, always visible, above scroll area */}
+        <div className={clsx("shrink-0 min-h-[4.5rem] mb-4 relative z-10 flex items-center", collapsed ? "flex-col justify-center gap-2" : "flex-row justify-between gap-2 px-2")}>
           <Link href="/dashboard" className={clsx("flex items-center gap-3 min-w-0", collapsed && "justify-center")}>
-            <div className="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30">
-              <Icon name="Zap" className="text-white" size={24} />
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/30 ring-1 ring-black/5 flex-shrink-0">
+              <Icon name="Zap" className="text-white shrink-0" size={26} strokeWidth={2.5} />
             </div>
             <AnimatePresence initial={false}>
               {!collapsed && (
@@ -87,8 +89,8 @@ const Sidebar = () => {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 space-y-1 overflow-y-auto pr-1 custom-scrollbar">
+        {/* Navigation — scrollable, scrollbar hidden */}
+        <nav className="flex-1 min-h-0 space-y-1 overflow-y-auto overflow-x-hidden pr-1 scrollbar-hide">
           {filteredMenuItems.map((item) => {
             const isActive = pathname.startsWith(item.path);
             return (
@@ -143,10 +145,21 @@ const Sidebar = () => {
           })}
         </nav>
 
-        {/* Version + Online */}
-        <div className={clsx("mt-auto pt-4 border-t border-gray-200/30 flex items-center", collapsed ? "justify-center px-0" : "justify-between px-2 gap-2")}>
-          {!collapsed && <span className="text-xs font-mono text-gray-400">v{APP_VERSION}</span>}
-          <div className="w-2 h-2 rounded-full bg-success/60 animate-pulse shrink-0" title="System Online" />
+        {/* Logout + Version + Online */}
+        <div className="shrink-0 mt-auto pt-4 border-t border-gray-200/30 space-y-2">
+          <button
+            type="button"
+            onClick={() => { logout(); router.push("/login"); }}
+            className={clsx("w-full flex items-center rounded-xl transition-colors text-gray-500 hover:text-error hover:bg-error/10", collapsed ? "justify-center px-3 py-3" : "gap-3 px-4 py-3")}
+            title="Sign out"
+          >
+            <Icon name="LogOut" size={20} className="shrink-0" />
+            {!collapsed && <span className="truncate">Logout</span>}
+          </button>
+          <div className={clsx("flex items-center", collapsed ? "justify-center px-0" : "justify-between px-2 gap-2")}>
+            {!collapsed && <span className="text-xs font-mono text-gray-400">v{APP_VERSION}</span>}
+            <div className="w-2 h-2 rounded-full bg-success/60 animate-pulse shrink-0" title="System Online" />
+          </div>
         </div>
       </div>
     </aside>

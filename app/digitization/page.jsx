@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { getAllInvoices } from "@/lib/api";
 import InvoiceList from "@/components/Digitization/InvoiceList";
 import Icon from "@/components/Icon";
-import { motion } from "framer-motion";
 
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -65,13 +64,8 @@ function DigitizationPageContent() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
             <div className="p-2 bg-primary/10 rounded-lg text-primary">
               <Icon name="ScanLine" size={28} />
@@ -81,22 +75,16 @@ function DigitizationPageContent() {
           <p className="text-gray-500 mt-2 ml-14 max-w-xl">
             Review, validate, and process incoming invoices. The AI pre-fills data for your verification.
           </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex gap-3"
-        >
-          <div className="join shadow-sm border border-white/40 rounded-lg">
-            <button className="join-item btn btn-sm bg-white/50 border-none hover:bg-white"><Icon name="List" size={18} /></button>
-            <button className="join-item btn btn-sm bg-primary text-white border-none"><Icon name="Grid" size={18} /></button>
-          </div>
-          <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
-            <Icon name="Filter" size={16} /> Filter
-          </button>
-        </motion.div>
+        </div>
+        <div className="flex gap-3">
+        <div className="join shadow-sm border border-white/40 rounded-lg">
+          <button className="join-item btn btn-sm bg-white/50 border-none hover:bg-white"><Icon name="List" size={18} /></button>
+          <button className="join-item btn btn-sm bg-primary text-white border-none"><Icon name="Grid" size={18} /></button>
+        </div>
+        <button className="btn btn-sm btn-ghost bg-white/40 border border-white/60 shadow-sm gap-2">
+          <Icon name="Filter" size={16} /> Filter
+        </button>
+        </div>
       </div>
 
       {/* Stats Summary (Mini) */}

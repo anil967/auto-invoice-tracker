@@ -8,38 +8,24 @@ import SyncIndicator from "@/components/Integration/SyncIndicator";
 export default function AnalyticsPage() {
   return (
     <div className="space-y-8 max-w-7xl mx-auto h-full pb-10">
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <motion.div 
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-        >
+        <div>
           <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
             <div className="p-2 bg-indigo-500/10 rounded-lg text-indigo-600">
-                <Icon name="BarChart2" size={28} />
+              <Icon name="BarChart2" size={28} />
             </div>
             Analytics & Insights
           </h1>
           <p className="text-gray-500 mt-2 ml-14 max-w-xl">
             Real-time performance metrics and spending analysis across your organization.
           </p>
-        </motion.div>
-        
-        <motion.div 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-        >
-            <SyncIndicator />
-        </motion.div>
+        </div>
+        <SyncIndicator />
       </div>
-
-      {/* Main Dashboard Content */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
         <AnalyticsDashboard />
       </motion.div>
